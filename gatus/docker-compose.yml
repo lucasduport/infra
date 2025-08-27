@@ -1,0 +1,13 @@
+services:
+  gatus:
+    image: twinproduction/gatus:latest
+    container_name: gatus
+    volumes:
+      - ./config:/config   # config file(s) live here (bind mount for easy edits)
+      - gatus-data:/data   # persistent data (future-proofing for history/storage)
+    ports:
+      - "8091:8080"        # expose the web UI
+    restart: unless-stopped
+
+volumes:
+  gatus-data:

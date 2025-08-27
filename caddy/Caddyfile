@@ -1,0 +1,39 @@
+truenas.lucasduport.cc {
+    reverse_proxy {$TRUENAS_TARGET}
+}
+
+lldap.lucasduport.cc {
+    reverse_proxy {$LLDAP_TARGET}
+}
+
+resume.lucasduport.cc {
+    redir https://portfolio.lucasduport.cc/cvs/CV_EN_2025.pdf
+}
+
+cv.lucasduport.cc {
+    redir https://portfolio.lucasduport.cc/cvs/CV_FR_2025.pdf
+}
+
+tv.lucasduport.cc {
+    reverse_proxy {$TV_TARGET}
+}
+
+vpn.lucasduport.cc {
+    reverse_proxy {$VPN_TARGET}
+}
+
+wol.lucasduport.cc {
+    reverse_proxy {$WOL_TARGET}
+}
+
+status.lucasduport.cc {
+    reverse_proxy {$STATUS_TARGET}
+}
+
+lucasduport.cc {
+    redir https://portfolio.lucasduport.cc
+}
+
+www.lucasduport.cc {
+    redir https://portfolio.lucasduport.cc
+}

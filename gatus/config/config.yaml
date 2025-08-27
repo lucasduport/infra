@@ -1,0 +1,83 @@
+# Docs: https://github.com/TwiN/gatus
+
+metrics: true
+
+storage:
+  type: sqlite
+  path: /data/data.db
+
+alerting:
+  # Placeholder example; wire to your notifier later if desired
+  slack:
+    webhook-url: ""
+    default-alert:
+      enabled: false
+
+endpoints:
+  # Public domains via Caddy. Use relaxed status conditions to allow redirects/login pages.
+  - name: tv.lucasduport.cc
+    group: public
+    url: https://tv.lucasduport.cc/
+    interval: 1m
+    conditions:
+      - '[STATUS] < 400'
+
+  - name: lldap.lucasduport.cc
+    group: public
+    url: https://lldap.lucasduport.cc/
+    interval: 1m
+    conditions:
+      - '[STATUS] < 400'
+
+  - name: truenas.lucasduport.cc
+    group: public
+    url: https://truenas.lucasduport.cc/
+    interval: 1m
+    conditions:
+      - '[STATUS] < 400'
+
+  - name: vpn.lucasduport.cc
+    group: public
+    url: tcp://vpn.lucasduport.cc:443
+    interval: 1m
+    conditions:
+      - '[CONNECTED] == true'
+
+  - name: wol.lucasduport.cc
+    group: public
+    url: tcp://wol.lucasduport.cc:443
+    interval: 1m
+    conditions:
+      - '[CONNECTED] == true'
+
+  - name: root-redirect
+    group: public
+    url: https://lucasduport.cc/
+    interval: 1m
+    conditions:
+      - '[STATUS] >= 200'
+      - '[STATUS] < 400'
+
+  - name: www-redirect
+    group: public
+    url: https://www.lucasduport.cc/
+    interval: 1m
+    conditions:
+      - '[STATUS] >= 200'
+      - '[STATUS] < 400'
+
+  - name: resume-redirect
+    group: public
+    url: https://resume.lucasduport.cc/
+    interval: 5m
+    conditions:
+      - '[STATUS] >= 300'
+      - '[STATUS] < 400'
+
+  - name: cv-redirect
+    group: public
+    url: https://cv.lucasduport.cc/
+    interval: 5m
+    conditions:
+      - '[STATUS] >= 300'
+      - '[STATUS] < 400'
