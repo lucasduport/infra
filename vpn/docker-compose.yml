@@ -28,10 +28,7 @@ services:
     environment:
       # REQUIRED: public hostname or IP to reach this server from clients
       - WG_HOST=${WG_HOST}
-
-      # Optional but recommended: set a UI password (or use PASSWORD_HASH)
-      - PASSWORD=${WG_PASSWORD}
-      # - PASSWORD_HASH= # Prefer a bcrypt hash here in production
+      - PASSWORD_HASH=${PASSWORD_HASH}
 
       # Optional: set to true to enable IPv6 peers if your host/network supports it
       - WG_ENABLE_IPV6=${WG_ENABLE_IPV6}
