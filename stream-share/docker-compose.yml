@@ -1,0 +1,90 @@
+services:
+  stream-share:
+    image: lucasduport/stream-share:latest
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+    environment:
+      # Server Configuration
+      PORT: 8080                       # Port to listen on
+      ADVERTISED_PORT: 443             # Port to advertise in URLs (for reverse proxy)
+      HOSTNAME: "${HOSTNAME}"                     # Hostname to use in URLs
+      REVERSE_PROXY: "true"
+      GIN_MODE: "release"              # Gin mode (debug or release) - read by Gin automatically if set
+      HTTPS: "1"                       # Use HTTPS in generated URLs
+      
+      # Xtream Configuration
+      XTREAM_USER: "${XTREAM_USER}"          # Xtream API username
+      XTREAM_PASSWORD: "${XTREAM_PASSWORD}"        # Xtream API password
+      XTREAM_BASE_URL: "${XTREAM_BASE_URL}"  # Xtream API base URL
+      XTREAM_API_GET: "true"          # Generate get.php from API
+
+      # Debug options
+      DEBUG_LOGGING: "true"            # Enable debug logging
+      CACHE_FOLDER: "/root"      # Folder to save responses
+
+      # LDAP Authentication
+      LDAP_ENABLED: "true"
+      LDAP_SERVER: "${LDAP_SERVER}"
+      LDAP_BASE_DN: "ou=people,dc=lucasduport,dc=cc"
+      LDAP_BIND_DN: "uid=${LDAP_BIND_DN},ou=people,dc=lucasduport,dc=cc"
+      LDAP_BIND_PASSWORD: "${LDAP_BIND_PASSWORD}"
+      LDAP_USER_ATTRIBUTE: "uid"
+      LDAP_GROUP_BASE_DN: "ou=groups,dc=lucasduport,dc=cc"
+      LDAP_GROUP_FILTER: "(cn=iptv)"  # Only allow 'iptv' group members
+      LDAP_REQUIRE_GROUP: "true"
+
+      # Database Configuration
+      DB_HOST: "db"                    # Postgres hostname 
+      DB_PORT: "5432"                  # Postgres port
+      DB_NAME: "${POSTGRES_DB}"             # Postgres database name
+      DB_USER: "${POSTGRES_USER}"             # Postgres username
+      DB_PASSWORD: "${POSTGRES_PASSWORD}"     # Postgres password
+
+      # Discord Bot Configuration
+      DISCORD_BOT_TOKEN: "${DISCORD_BOT_TOKEN}"            # Discord bot token
+      DISCORD_ADMIN_ROLE_ID: "${DISCORD_ADMIN_ROLE_ID}"        # Discord role ID for admin commands
+      DISCORD_API_URL: "${DISCORD_API_URL}"              # API URL for Discord bot (defaults to hostname)
+
+      # Multiplexing and Session Management
+      SESSION_TIMEOUT_MINUTES: "90"    # User session timeout in minutes
+      STREAM_TIMEOUT_MINUTES: "1"      # Stream timeout (after all users disconnect)
+      TEMP_LINK_HOURS: "24"            # Temporary download link expiration in hours
+
+    volumes:
+      - ss_config:/root     # Persistent configuration storage (config, state)
+
+    depends_on:
+      - db
+      
+  # PostgreSQL database
+  db:
+    image: postgres:14-alpine
+    container_name: stream-share-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Uncomment to expose PostgreSQL port for external access
+    # ports:
+    #  - "5432:5432"
+    
+  # Adminer for database management (optional)
+  # adminer:
+  #   image: adminer
+  #   container_name: stream-share-adminer
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8081:8080"
+  #   environment:
+  #     ADMINER_DEFAULT_SERVER: db
+  #   depends_on:
+  #     - db
+
+volumes:
+  ss_config:
+  postgres_data:

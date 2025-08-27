@@ -1,0 +1,39 @@
+{
+	acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+}
+
+*.lucasduport.cc {
+	@www host www.lucasduport.cc
+	@nas host nas.lucasduport.cc
+	@ldap host ldap.lucasduport.cc
+	@tv host tv.lucasduport.cc
+	@status host status.lucasduport.cc
+	@resume host resume.lucasduport.cc
+	@cv host cv.lucasduport.cc
+
+	handle @www {
+		redir https://portfolio.lucasduport.cc
+	}
+	handle @nas {
+		reverse_proxy {env.NAS_TARGET}
+	}
+	handle @ldap {
+		reverse_proxy {env.LDAP_TARGET}
+	}
+	handle @tv {
+		reverse_proxy {env.TV_TARGET}
+	}
+	handle @status {
+		reverse_proxy {env.STATUS_TARGET}
+	}
+	handle @resume {
+		redir https://portfolio.lucasduport.cc/cvs/CV_EN_2025.pdf
+	}
+	handle @cv {
+		redir https://portfolio.lucasduport.cc/cvs/CV_FR_2025.pdf
+	}
+}
+
+lucasduport.cc {
+	redir https://portfolio.lucasduport.cc
+}
