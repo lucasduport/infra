@@ -1,0 +1,22 @@
+services:
+  caddy:
+    image: ghcr.io/caddybuilds/caddy-cloudflare:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      NAS_TARGET: ${NAS_TARGET}
+      LDAP_TARGET: ${LDAP_TARGET}
+      TV_TARGET: ${TV_TARGET}
+      STATUS_TARGET: ${STATUS_TARGET}
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+    volumes:
+      - ./mount/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

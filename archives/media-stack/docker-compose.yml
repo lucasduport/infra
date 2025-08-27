@@ -1,0 +1,128 @@
+version: "3"
+services:
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Europe/Paris
+    restart: unless-stopped
+    volumes:
+      - radarr_config:/config
+      - media_movies:/movies
+      - downloads:/downloads
+    ports:
+      - "7878:7878"
+    depends_on:
+      - jackett
+      - rdtclient
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Europe/Paris
+    restart: unless-stopped
+    volumes:
+      - sonarr_config:/config
+      - media_series:/tv
+      - downloads:/downloads
+    ports:
+      - "8989:8989"
+    depends_on:
+      - jackett
+      - rdtclient
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Europe/Paris
+    restart: unless-stopped
+    volumes:
+      - bazarr_config:/config
+      - media_movies:/movies
+      - media_series:/tv
+    ports:
+      - "6767:6767"
+    depends_on:
+      - jackett
+      - rdtclient
+  jackett:
+    image: lscr.io/linuxserver/jackett:latest
+    container_name: jackett
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Europe/Paris
+      - AUTO_UPDATE=true
+    restart: unless-stopped
+    volumes:
+      - jackett_config:/config
+    ports:
+      - "9117:9117"
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+    restart: unless-stopped
+    volumes:
+      - jellyfin_config:/config
+      - media_series:/data/tvshows
+      - media_movies:/data/movies
+      - media_books:/data/books
+    ports:
+      - "8096:8096"
+      - "7359:7359/udp"
+      - "1900:1900/udp"
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    environment:
+      - LOG_LEVEL=debug
+      - TZ=Europe/Paris
+    restart: unless-stopped
+    volumes:
+      - jellyseerr_config:/app/config
+    ports:
+      - "5057:5055"
+    depends_on:
+      - jellyfin
+  rdtclient:
+    image: rogerfar/rdtclient:latest
+    container_name: rdtclient
+    environment: 
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+    volumes:
+      - rdtclient_config:/data/db
+      - downloads:/data/downloads
+    ports:
+      - "6500:6500"
+
+volumes:
+  radarr_config:
+  sonarr_config:
+  bazarr_config:
+  jackett_config:
+  jellyfin_config:
+  jellyseerr_config:
+  rdtclient_config:
+  media_movies:
+  media_series:
+  media_books:
+  downloads:

@@ -1,0 +1,147 @@
+# Docs: https://github.com/TwiN/gatus
+
+metrics: true
+
+storage:
+  type: sqlite
+  path: /data/data.db
+
+alerting:
+  # Discord alerting
+  discord:
+    # Webhook for ALL endpoints' unhealthy alerts
+    webhook-url: ${DISCORD_WEBHOOK_ALL}
+    default-alert:
+      failure-threshold: 5
+      success-threshold: 1
+      send-on-resolved: true
+      description: "Endpoint unhealthy"
+
+  # Placeholder example; wire to your notifier later if desired
+  slack:
+    webhook-url: ""
+    default-alert:
+      enabled: false
+
+ui:
+  header: "External monitoring of my services: let's see if something is broken"
+  title: "Status"
+  logo: "https://portfolio.lucasduport.cc/images/avatar.png"
+  link: "https://portfolio.lucasduport.cc/"
+  ui.default-sort-by: "group"
+
+endpoints:
+  - name: "Reverse Proxy"
+    group: "1. Server administration"
+    url: https://truenas.lucasduport.cc
+    interval: 1m
+    headers:
+      Host: "truenas.lucasduport.cc"
+    conditions:
+      - '[STATUS] == 200'
+    client:
+      insecure: true
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+    alerts:
+      - type: discord
+  - name: "NAS Dashboard"
+    group: "1. Server administration"
+    url: http://${NAS_TARGET}
+    interval: 1m
+    conditions:
+      - '[STATUS] == 200'
+    client:
+      insecure: true
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+    alerts:
+      - type: discord
+
+  - name: "LDAP Dashboard"
+    group: "2. Authentication"
+    url: http://${LDAP_TARGET}
+    interval: 1m
+    conditions:
+      - '[STATUS] == 200'
+    client:
+      insecure: true
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+    alerts:
+      - type: discord
+
+  - name: "TV"
+    group: "3. Media"
+    url: tcp://${TV_TARGET}
+    interval: 1m
+    conditions:
+      - '[CONNECTED] == true'
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+    alerts:
+      # TV-specific webhook (both failure and resolved)
+      - type: discord
+        description: "TV endpoint status"
+        failure-threshold: 5
+        send-on-resolved: true
+        provider-override:
+          webhook-url: ${DISCORD_WEBHOOK_TV}
+      # Global webhook for any unhealthy endpoints
+      - type: discord
+
+  - name: "Portfolio"
+    group: "4. Portfolio"
+    url: https://portfolio.lucasduport.cc/
+    interval: 1m
+    headers:
+      Host: "portfolio.lucasduport.cc"
+    conditions:
+      - '[STATUS] >= 200'
+      - '[STATUS] < 400'
+    alerts:
+      - type: discord
+
+  - name: "Redirect English resume"
+    group: "4. Portfolio"
+    url: https://resume.lucasduport.cc/
+    interval: 5m
+    headers:
+      Host: "resume.lucasduport.cc"
+    conditions:
+      - '[STATUS] >= 200'
+      - '[STATUS] < 400'
+    alerts:
+      - type: discord
+
+  - name: "Redirect French resume"
+    group: "4. Portfolio"
+    url: https://cv.lucasduport.cc/
+    interval: 5m
+    headers:
+      Host: "cv.lucasduport.cc"
+    conditions:
+      - '[STATUS] >= 200'
+      - '[STATUS] < 400'
+    alerts:
+      - type: discord
+
+  - name: "Redirect portfolio"
+    group: "4. Portfolio"
+    url: https://lucasduport.cc/
+    interval: 1m
+    headers:
+      Host: "lucasduport.cc"
+    conditions:
+      - '[STATUS] >= 200'
+      - '[STATUS] < 400'
+    alerts:
+      - type: discord

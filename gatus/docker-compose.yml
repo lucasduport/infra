@@ -1,0 +1,20 @@
+services:
+  gatus:
+    image: twinproduction/gatus:latest
+    container_name: gatus
+    volumes:
+      - ./config:/config
+      - gatus-data:/data   # persistent data (future-proofing for history/storage)
+    ports:
+      - "8091:8080"        # expose the web UI
+    restart: unless-stopped
+    environment:
+      - DISCORD_WEBHOOK_ALL=${DISCORD_WEBHOOK_ALL}
+      - DISCORD_WEBHOOK_TV=${DISCORD_WEBHOOK_TV}
+      - NAS_TARGET=${NAS_TARGET}
+      - REVERSE_PROXY_TARGET=${REVERSE_PROXY_TARGET}
+      - LDAP_TARGET=${LDAP_TARGET}
+      - TV_TARGET=${TV_TARGET}
+
+volumes:
+  gatus-data:

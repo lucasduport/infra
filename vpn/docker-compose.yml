@@ -1,0 +1,37 @@
+services:
+  wg-easy:
+    image: ghcr.io/wg-easy/wg-easy:latest
+    container_name: wg-easy
+    restart: unless-stopped
+
+    # Web UI: http(s)://<WG_HOST>:51821
+    # VPN:    UDP 51820
+    ports:
+      - "${WG_PORT}:51820/udp"
+      - "${WG_UI_PORT}:51821/tcp"
+
+    # Persist WireGuard server + peers config
+    volumes:
+      - wireguard_data:/etc/wireguard
+
+    # Required for WireGuard
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_MODULE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv6.conf.all.forwarding=1
+
+    environment:
+      # REQUIRED: public hostname or IP to reach this server from clients
+      - WG_HOST=${WG_HOST}
+      - PASSWORD_HASH=${PASSWORD_HASH}
+
+      # Optional: set to true to enable IPv6 peers if your host/network supports it
+      - WG_ENABLE_IPV6=${WG_ENABLE_IPV6}
+
+volumes:
+  wireguard_data:
