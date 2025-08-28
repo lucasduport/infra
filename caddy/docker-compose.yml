@@ -6,8 +6,15 @@ services:
       - "80:80"
       - "443:443"
       - "443:443/udp"
+    environment:
+      TRUENAS_TARGET: ${TRUENAS_TARGET}
+      LLDAP_TARGET: ${LLDAP_TARGET}
+      TV_TARGET: ${TV_TARGET}
+      VPN_TARGET: ${VPN_TARGET}
+      WOL_TARGET: ${WOL_TARGET}
+      STATUS_TARGET: ${STATUS_TARGET}
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./mount/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
 
