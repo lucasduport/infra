@@ -6,24 +6,24 @@ lldap.lucasduport.cc {
     reverse_proxy {$LLDAP_TARGET}
 }
 
+tv.lucasduport.cc {
+    reverse_proxy {$TV_TARGET}
+}
+
+sh.lucasduport.cc {
+    reverse_proxy {$SHLINK_TARGET}
+}
+
+status.lucasduport.cc {
+    reverse_proxy {$STATUS_TARGET}
+}
+
 resume.lucasduport.cc {
     redir https://portfolio.lucasduport.cc/cvs/CV_EN_2025.pdf
 }
 
 cv.lucasduport.cc {
     redir https://portfolio.lucasduport.cc/cvs/CV_FR_2025.pdf
-}
-
-tv.lucasduport.cc {
-    reverse_proxy {$TV_TARGET}
-}
-
-wol.lucasduport.cc {
-    reverse_proxy {$WOL_TARGET}
-}
-
-status.lucasduport.cc {
-    reverse_proxy {$STATUS_TARGET}
 }
 
 lucasduport.cc {
