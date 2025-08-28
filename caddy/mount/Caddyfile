@@ -18,10 +18,6 @@ tv.lucasduport.cc {
     reverse_proxy {$TV_TARGET}
 }
 
-vpn.lucasduport.cc {
-    reverse_proxy {$VPN_TARGET}
-}
-
 wol.lucasduport.cc {
     reverse_proxy {$WOL_TARGET}
 }

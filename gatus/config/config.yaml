@@ -36,20 +36,6 @@ endpoints:
     conditions:
       - '[STATUS] < 400'
 
-  - name: vpn.lucasduport.cc
-    group: public
-    url: tcp://vpn.lucasduport.cc:443
-    interval: 1m
-    conditions:
-      - '[CONNECTED] == true'
-
-  - name: wol.lucasduport.cc
-    group: public
-    url: tcp://wol.lucasduport.cc:443
-    interval: 1m
-    conditions:
-      - '[CONNECTED] == true'
-
   - name: root-redirect
     group: public
     url: https://lucasduport.cc/
