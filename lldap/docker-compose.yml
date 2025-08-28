@@ -1,6 +1,6 @@
 services:
   lldap:
-    image: lldap/lldap:stable
+    image: lldap/lldap:latest
     ports:
       # For LDAP, not recommended to expose, see Usage section.
       - "3890:3890"
