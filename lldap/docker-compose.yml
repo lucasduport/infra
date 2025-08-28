@@ -18,6 +18,8 @@ services:
       - LLDAP_KEY_SEED=${LLDAP_KEY_SEED}
       - LLDAP_LDAP_BASE_DN=dc=lucasduport,dc=cc
       - LLDAP_LDAP_USER_PASS=${LLDAP_LDAP_USER_PASS}
+      - LLDAP_FORCE_LDAP_USER_PASS_RESET=${LLDAP_FORCE_LDAP_USER_PASS_RESET}
+      - LLDAP_FORCE_UPDATE_PRIVATE_KEY=${LLDAP_FORCE_UPDATE_PRIVATE_KEY}
       # If using LDAPS, set enabled true and configure cert and key path
       # - LLDAP_LDAPS_OPTIONS__ENABLED=true
       # - LLDAP_LDAPS_OPTIONS__CERT_FILE=/path/to/certfile.crt
