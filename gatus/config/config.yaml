@@ -7,20 +7,42 @@ storage:
   path: /data/data.db
 
 alerting:
+  # Discord alerting
+  discord:
+    # Webhook for ALL endpoints' unhealthy alerts
+    webhook-url: ${DISCORD_WEBHOOK_ALL}
+    default-alert:
+      failure-threshold: 1
+      success-threshold: 1
+      send-on-resolved: true
+      description: "Endpoint unhealthy"
+
   # Placeholder example; wire to your notifier later if desired
   slack:
     webhook-url: ""
     default-alert:
       enabled: false
 
+ui:
+  header: "let's see if something is broken"
+  title: "Status | let's see if something is broken"
+
 endpoints:
-  # Public domains via Caddy. Use relaxed status conditions to allow redirects/login pages.
   - name: tv.lucasduport.cc
     group: public
-    url: https://tv.lucasduport.cc/
+    url: tcp://tv.lucasduport.cc:443
     interval: 1m
     conditions:
-      - '[STATUS] < 400'
+      - '[CONNECTED] == true'
+    alerts:
+      # TV-specific webhook (both failure and resolved)
+      - type: discord
+        description: "TV endpoint status"
+        send-on-resolved: true
+        provider-override:
+          webhook-url: ${DISCORD_WEBHOOK_TV}
+      # Global webhook for any unhealthy endpoints
+      - type: discord
 
   - name: lldap.lucasduport.cc
     group: public
@@ -28,6 +50,8 @@ endpoints:
     interval: 1m
     conditions:
       - '[STATUS] < 400'
+    alerts:
+      - type: discord
 
   - name: truenas.lucasduport.cc
     group: public
@@ -35,6 +59,8 @@ endpoints:
     interval: 1m
     conditions:
       - '[STATUS] < 400'
+    alerts:
+      - type: discord
 
   - name: root-redirect
     group: public
@@ -43,6 +69,8 @@ endpoints:
     conditions:
       - '[STATUS] >= 200'
       - '[STATUS] < 400'
+    alerts:
+      - type: discord
 
   - name: www-redirect
     group: public
@@ -51,19 +79,25 @@ endpoints:
     conditions:
       - '[STATUS] >= 200'
       - '[STATUS] < 400'
+    alerts:
+      - type: discord
 
   - name: resume-redirect
     group: public
     url: https://resume.lucasduport.cc/
     interval: 5m
     conditions:
-      - '[STATUS] >= 300'
+      - '[STATUS] >= 200'
       - '[STATUS] < 400'
+    alerts:
+      - type: discord
 
   - name: cv-redirect
     group: public
     url: https://cv.lucasduport.cc/
     interval: 5m
     conditions:
-      - '[STATUS] >= 300'
+      - '[STATUS] >= 200'
       - '[STATUS] < 400'
+    alerts:
+      - type: discord

@@ -8,6 +8,9 @@ services:
     ports:
       - "8091:8080"        # expose the web UI
     restart: unless-stopped
+    environment:
+      - DISCORD_WEBHOOK_ALL=${DISCORD_WEBHOOK_ALL}
+      - DISCORD_WEBHOOK_TV=${DISCORD_WEBHOOK_TV}
 
 volumes:
   gatus-data:
