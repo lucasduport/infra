@@ -28,7 +28,25 @@ ui:
   title: "Status | let's see if something is broken"
 
 endpoints:
-  - name: tv.lucasduport.cc
+  - name: "TrueNAS Dashboard"
+    group: public
+    url: https://truenas.lucasduport.cc/
+    interval: 1m
+    conditions:
+      - '[STATUS] < 400'
+    alerts:
+      - type: discord
+
+  - name: "LDAP Dashboard"
+    group: public
+    url: https://lldap.lucasduport.cc/
+    interval: 1m
+    conditions:
+      - '[STATUS] < 400'
+    alerts:
+      - type: discord
+
+  - name: "TV"
     group: public
     url: tcp://tv.lucasduport.cc:443
     interval: 1m
@@ -44,45 +62,7 @@ endpoints:
       # Global webhook for any unhealthy endpoints
       - type: discord
 
-  - name: lldap.lucasduport.cc
-    group: public
-    url: https://lldap.lucasduport.cc/
-    interval: 1m
-    conditions:
-      - '[STATUS] < 400'
-    alerts:
-      - type: discord
-
-  - name: truenas.lucasduport.cc
-    group: public
-    url: https://truenas.lucasduport.cc/
-    interval: 1m
-    conditions:
-      - '[STATUS] < 400'
-    alerts:
-      - type: discord
-
-  - name: root-redirect
-    group: public
-    url: https://lucasduport.cc/
-    interval: 1m
-    conditions:
-      - '[STATUS] >= 200'
-      - '[STATUS] < 400'
-    alerts:
-      - type: discord
-
-  - name: www-redirect
-    group: public
-    url: https://www.lucasduport.cc/
-    interval: 1m
-    conditions:
-      - '[STATUS] >= 200'
-      - '[STATUS] < 400'
-    alerts:
-      - type: discord
-
-  - name: resume-redirect
+  - name: "Download English resume"
     group: public
     url: https://resume.lucasduport.cc/
     interval: 5m
@@ -92,10 +72,30 @@ endpoints:
     alerts:
       - type: discord
 
-  - name: cv-redirect
+  - name: "Download French resume"
     group: public
     url: https://cv.lucasduport.cc/
     interval: 5m
+    conditions:
+      - '[STATUS] >= 200'
+      - '[STATUS] < 400'
+    alerts:
+      - type: discord
+
+  - name: "Redirect portfolio"
+    group: public
+    url: https://lucasduport.cc/
+    interval: 1m
+    conditions:
+      - '[STATUS] >= 200'
+      - '[STATUS] < 400'
+    alerts:
+      - type: discord
+
+  - name: "Redirect on www"
+    group: public
+    url: https://www.lucasduport.cc/
+    interval: 1m
     conditions:
       - '[STATUS] >= 200'
       - '[STATUS] < 400'
