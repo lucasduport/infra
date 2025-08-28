@@ -62,7 +62,17 @@ endpoints:
       # Global webhook for any unhealthy endpoints
       - type: discord
 
-  - name: "Download English resume"
+  - name: "Portfolio"
+    group: public
+    url: https://portfolio.lucasduport.cc/
+    interval: 1m
+    conditions:
+      - '[STATUS] >= 200'
+      - '[STATUS] < 400'
+    alerts:
+      - type: discord
+
+  - name: "Redirect English resume"
     group: public
     url: https://resume.lucasduport.cc/
     interval: 5m
@@ -72,7 +82,7 @@ endpoints:
     alerts:
       - type: discord
 
-  - name: "Download French resume"
+  - name: "Redirect French resume"
     group: public
     url: https://cv.lucasduport.cc/
     interval: 5m
