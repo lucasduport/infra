@@ -1,35 +1,47 @@
-truenas.lucasduport.cc {
-    reverse_proxy {$TRUENAS_TARGET}
-}
+*.lucasduport.cc {
+   @www host www.lucasduport.cc 
 
-lldap.lucasduport.cc {
-    reverse_proxy {$LLDAP_TARGET}
-}
+   @truenas host truenas.lucasduport.cc
 
-tv.lucasduport.cc {
-    reverse_proxy {$TV_TARGET}
-}
+   @lldap host lldap.lucasduport.cc
+   
+   @tv host tv.lucasduport.cc
 
-sh.lucasduport.cc {
-    reverse_proxy {$SHLINK_TARGET}
-}
+   @status host status.lucasduport.cc
+   
+   @resume host resume.lucasduport.cc
+   @cv host cv.lucasduport.cc
 
-status.lucasduport.cc {
-    reverse_proxy {$STATUS_TARGET}
-}
+   handle @www {
+       redir https://portfolio.lucasduport.cc
+   }
 
-resume.lucasduport.cc {
-    redir https://portfolio.lucasduport.cc/cvs/CV_EN_2025.pdf
-}
+   handle @truenas {
+       reverse_proxy {$TRUENAS_TARGET}
+   }
 
-cv.lucasduport.cc {
-    redir https://portfolio.lucasduport.cc/cvs/CV_FR_2025.pdf
+   handle @lldap {
+       reverse_proxy {$LLDAP_TARGET}
+   }
+
+   handle @tv {
+       reverse_proxy {$TV_TARGET}
+   }
+
+   handle @status {
+       reverse_proxy {$STATUS_TARGET}
+   }
+
+   handle @resume {
+       redir https://portfolio.lucasduport.cc/cvs/CV_EN_2025.pdf
+   }
+
+   handle @cv {
+       redir https://portfolio.lucasduport.cc/cvs/CV_FR_2025.pdf
+   }
 }
 
 lucasduport.cc {
     redir https://portfolio.lucasduport.cc
 }
 
-www.lucasduport.cc {
-    redir https://portfolio.lucasduport.cc
-}
