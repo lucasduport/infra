@@ -10,6 +10,7 @@
 	@status host status.lucasduport.cc
 	@resume host resume.lucasduport.cc
 	@cv host cv.lucasduport.cc
+	@lkdn host lkdn.lucasduport.cc
 
 	handle @www {
 		redir https://portfolio.lucasduport.cc
@@ -31,6 +32,12 @@
 	}
 	handle @cv {
 		redir https://portfolio.lucasduport.cc/cvs/CV_FR_2025.pdf
+	}
+	handle @lkdn {
+		redir https://www.linkedin.com/in/lucas-duport/
+	}
+	handle {
+		respond "404 Not Found" 404
 	}
 }
 

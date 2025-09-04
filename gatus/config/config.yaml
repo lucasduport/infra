@@ -24,7 +24,7 @@ alerting:
       enabled: false
 
 ui:
-  header: "External monitoring of my services: let's see if something is broken"
+  header: "Monitoring Dashboard 👀"
   title: "Status"
   logo: "https://portfolio.lucasduport.cc/images/avatar.png"
   link: "https://portfolio.lucasduport.cc/"
@@ -33,10 +33,10 @@ ui:
 endpoints:
   - name: "Reverse Proxy"
     group: "1. Server administration"
-    url: https://truenas.lucasduport.cc
+    url: https://nas.lucasduport.cc
     interval: 1m
     headers:
-      Host: "truenas.lucasduport.cc"
+      Host: "nas.lucasduport.cc"
     conditions:
       - '[STATUS] == 200'
     client:
@@ -99,9 +99,9 @@ endpoints:
       - type: discord
 
   - name: "Portfolio"
-    group: "4. Portfolio"
+    group: "4. Redirect"
     url: https://portfolio.lucasduport.cc/
-    interval: 1m
+    interval: 5m
     headers:
       Host: "portfolio.lucasduport.cc"
     conditions:
@@ -111,7 +111,7 @@ endpoints:
       - type: discord
 
   - name: "Redirect English resume"
-    group: "4. Portfolio"
+    group: "4. Redirect"
     url: https://resume.lucasduport.cc/
     interval: 5m
     headers:
@@ -123,7 +123,7 @@ endpoints:
       - type: discord
 
   - name: "Redirect French resume"
-    group: "4. Portfolio"
+    group: "4. Redirect"
     url: https://cv.lucasduport.cc/
     interval: 5m
     headers:
@@ -135,11 +135,22 @@ endpoints:
       - type: discord
 
   - name: "Redirect portfolio"
-    group: "4. Portfolio"
+    group: "4. Redirect"
     url: https://lucasduport.cc/
-    interval: 1m
+    interval: 5m
     headers:
       Host: "lucasduport.cc"
+    conditions:
+      - '[STATUS] >= 200'
+      - '[STATUS] < 400'
+    alerts:
+      - type: discord
+  - name: "Redirect LinkedIn"
+    group: "4. Redirect"
+    url: https://lkdn.lucasduport.cc/
+    interval: 5m
+    headers:
+      Host: "lkdn.lucasduport.cc"
     conditions:
       - '[STATUS] >= 200'
       - '[STATUS] < 400'
