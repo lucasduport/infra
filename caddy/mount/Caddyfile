@@ -11,16 +11,49 @@
 	@resume host resume.lucasduport.cc
 	@cv host cv.lucasduport.cc
 	@lkdn host lkdn.lucasduport.cc
+	@mcp host mcp.lucasduport.cc
 
-	handle @www {
-		redir https://portfolio.lucasduport.cc
+	handle @mcp {
+		@favicon path /favicon.ico
+		handle @favicon {
+			redir https://portfolio.lucasduport.cc/favicon.ico 302
+		}
+
+		# Handle CORS preflight requests for this host
+		@preflight method OPTIONS
+		handle @preflight {
+			header Access-Control-Allow-Origin "*"
+			header Access-Control-Allow-Methods "GET, POST, OPTIONS"
+			header Access-Control-Allow-Headers "Content-Type, Authorization"
+			header Access-Control-Max-Age "3600"
+			respond 204
+		}
+
+		# Ensure proxied responses include CORS headers and are SSE-friendly
+		header {
+			Access-Control-Allow-Origin *
+			Access-Control-Allow-Methods "GET, POST, OPTIONS"
+			Access-Control-Allow-Headers "Content-Type, Authorization"
+			Access-Control-Expose-Headers "Content-Type"
+		}
+
+		# Reverse proxy to the MCP backend with SSE-friendly settings
+		reverse_proxy {env.MCP_TARGET} {
+			# Disable buffering to allow SSE streaming
+			flush_interval -1
+			# Preserve headers (critical for CORS and SSE)
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+			# Ensure SSE headers are passed through / set on downstream responses
+			header_down Content-Type "text/event-stream"
+			header_down Cache-Control "no-cache"
+			header_down Connection "keep-alive"
+		}
 	}
-	handle @nas {
-		reverse_proxy {env.NAS_TARGET}
-	}
-	handle @ldap {
-		reverse_proxy {env.LDAP_TARGET}
-	}
+	reverse_proxy {env.LDAP_TARGET}
+
 	handle @tv {
 		reverse_proxy {env.TV_TARGET}
 	}
@@ -36,9 +69,12 @@
 	handle @lkdn {
 		redir https://www.linkedin.com/in/lucas-duport/
 	}
+
+	# Default handler for this site
 	handle {
 		respond "404 Not Found" 404
 	}
+
 }
 
 lucasduport.cc {
