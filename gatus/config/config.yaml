@@ -152,7 +152,7 @@ endpoints:
     headers:
       Host: "lkdn.lucasduport.cc"
     conditions:
-      - '[STATUS] >= 200'
-      - '[STATUS] < 400'
+    # Weird way to check for a redirect (status code 999) for LinkedIn cf. https://http.dev/999#linkedin
+      - '[STATUS] == 999'
     alerts:
       - type: discord

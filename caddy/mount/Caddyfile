@@ -11,20 +11,13 @@
 	@resume host resume.lucasduport.cc
 	@cv host cv.lucasduport.cc
 	@lkdn host lkdn.lucasduport.cc
-	@mcp host mcp.lucasduport.cc
 
-	handle @mcp {
-		@favicon path /favicon.ico
-		handle @favicon {
-			redir https://portfolio.lucasduport.cc/favicon.ico 302
-		}
-
-		reverse_proxy {env.MCP_TARGET}
-	}
 	handle @ldap {
 		reverse_proxy {env.LDAP_TARGET}
 	}
-
+	handle @nas {
+		reverse_proxy {env.NAS_TARGET}
+	}
 	handle @tv {
 		reverse_proxy {env.TV_TARGET}
 	}
