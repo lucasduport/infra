@@ -1,0 +1,40 @@
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: keycloak_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.0
+    container_name: keycloak
+    restart: always
+    command: start --optimized
+    ports:
+      - "8092:8080"
+    environment:
+      KC_DB: ${KC_DB}
+      KC_DB_URL_HOST: ${KC_DB_URL_HOST}
+      KC_DB_URL_DATABASE: ${KC_DB_URL_DATABASE}
+      KC_DB_USERNAME: ${KC_DB_USERNAME}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD}
+      KC_HOSTNAME: ${KC_HOSTNAME}
+      KC_PROXY: edge
+      KC_HOSTNAME_STRICT: "true"
+      KC_HOSTNAME_STRICT_HTTPS: "true"
+    depends_on:
+      - postgres
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+
+volumes:
+  postgres_data:
+  keycloak_data:
