@@ -11,6 +11,7 @@
 	@resume host resume.lucasduport.cc
 	@cv host cv.lucasduport.cc
 	@lkdn host lkdn.lucasduport.cc
+	@keycloak host keycloak.lucasduport.cc
 
 	handle @ldap {
 		reverse_proxy {env.LDAP_TARGET}
@@ -23,6 +24,14 @@
 	}
 	handle @status {
 		reverse_proxy {env.STATUS_TARGET}
+	}
+	handle @keycloak {
+		reverse_proxy {env.KEYCLOAK_TARGET} {
+			header_up X-Forwarded-Proto https
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Host {host}
+			header_up Host {host}
+		}
 	}
 	handle @resume {
 		redir https://portfolio.lucasduport.cc/cvs/CV_EN_2025.pdf
