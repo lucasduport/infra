@@ -13,6 +13,7 @@ services:
       STATUS_TARGET: ${STATUS_TARGET}
       CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
       KEYCLOAK_TARGET: ${KEYCLOAK_TARGET}
+      CONFIG_SERVER_TARGET: ${CONFIG_SERVER_TARGET}
     volumes:
       - ./mount/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
