@@ -3,35 +3,44 @@
 }
 
 *.lucasduport.cc {
-	@www host www.lucasduport.cc
-	@nas host nas.lucasduport.cc
 	@ldap host ldap.lucasduport.cc
-	@tv host tv.lucasduport.cc
-	@status host status.lucasduport.cc
-	@resume host resume.lucasduport.cc
-	@cv host cv.lucasduport.cc
-	@lkdn host lkdn.lucasduport.cc
-
 	handle @ldap {
 		reverse_proxy {env.LDAP_TARGET}
 	}
+
+	@nas host nas.lucasduport.cc
 	handle @nas {
 		reverse_proxy {env.NAS_TARGET}
 	}
+
+	@tv host tv.lucasduport.cc
 	handle @tv {
 		reverse_proxy {env.TV_TARGET}
 	}
+
+	@status host status.lucasduport.cc
 	handle @status {
 		reverse_proxy {env.STATUS_TARGET}
 	}
+
+	@resume host resume.lucasduport.cc
 	handle @resume {
 		redir https://portfolio.lucasduport.cc/cvs/CV_EN_2025.pdf
 	}
+
+	@cv host cv.lucasduport.cc
 	handle @cv {
 		redir https://portfolio.lucasduport.cc/cvs/CV_FR_2025.pdf
 	}
+
+	@lkdn host lkdn.lucasduport.cc
 	handle @lkdn {
 		redir https://www.linkedin.com/in/lucas-duport/
+	}
+
+	@www host www.lucasduport.cc
+	handle @www {
+		redir https://lucasduport.cc{uri}
 	}
 
 	# Default handler for this site
@@ -41,5 +50,5 @@
 }
 
 lucasduport.cc {
-	redir https://portfolio.lucasduport.cc
+	redir https://portfolio.lucasduport.cc{uri}
 }
