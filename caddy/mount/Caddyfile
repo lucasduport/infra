@@ -23,6 +23,11 @@
 		reverse_proxy {env.STATUS_TARGET}
 	}
 
+	@suivi host suivi.lucasduport.cc
+	handle @suivi {
+		reverse_proxy {env.SUIVI_TARGET}
+	}
+
 	@resume host resume.lucasduport.cc
 	handle @resume {
 		redir https://portfolio.lucasduport.cc/cvs/CV_EN_2025.pdf
