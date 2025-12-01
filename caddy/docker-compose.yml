@@ -12,6 +12,7 @@ services:
       TV_TARGET: ${TV_TARGET}
       STATUS_TARGET: ${STATUS_TARGET}
       CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+      SUIVI_TARGET: ${SUIVI_TARGET}
     volumes:
       - ./mount/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
