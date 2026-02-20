@@ -1,0 +1,124 @@
+{{- if .Values.vpn.enabled }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: vpn-secrets
+  namespace: {{ .Values.infraNamespace }}
+type: Opaque
+stringData:
+  {{- toYaml .Values.vpn.secrets | nindent 2 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wg-easy
+  namespace: {{ .Values.infraNamespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: wg-easy
+  ports:
+    - name: web-ui
+      port: 51821
+      targetPort: 51821
+      protocol: TCP
+    - name: wireguard
+      port: 51820
+      targetPort: 51820
+      protocol: UDP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wireguard-data
+  namespace: {{ .Values.infraNamespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wg-easy
+  namespace: {{ .Values.infraNamespace }}
+  labels:
+    app: wg-easy
+spec:
+  replicas: {{ .Values.vpn.replicas }}
+  selector:
+    matchLabels:
+      app: wg-easy
+  template:
+    metadata:
+      labels:
+        app: wg-easy
+    spec:
+      hostNetwork: true
+      {{- with .Values.vpn.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: wg-easy
+          image: {{ .Values.vpn.image }}
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - NET_RAW
+                - SYS_MODULE
+          env:
+            - name: WG_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: vpn-secrets
+                  key: WG_HOST
+            - name: PASSWORD_HASH
+              valueFrom:
+                secretKeyRef:
+                  name: vpn-secrets
+                  key: PASSWORD_HASH
+            - name: WG_ENABLE_IPV6
+              valueFrom:
+                secretKeyRef:
+                  name: vpn-secrets
+                  key: WG_ENABLE_IPV6
+          volumeMounts:
+            - name: wireguard-data
+              mountPath: /etc/wireguard
+            - name: dev-tun
+              mountPath: /dev/net/tun
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          readinessProbe:
+            tcpSocket:
+              port: 51821
+            initialDelaySeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 51821
+            initialDelaySeconds: 20
+      volumes:
+        - name: wireguard-data
+          persistentVolumeClaim:
+            claimName: wireguard-data
+        - name: dev-tun
+          hostPath:
+            path: /dev/net/tun
+            type: CharDevice
+      securityContext:
+        sysctls:
+          - name: net.ipv4.ip_forward
+            value: "1"
+          - name: net.ipv6.conf.all.forwarding
+            value: "1"
+{{- end }}

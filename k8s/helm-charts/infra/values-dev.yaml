@@ -1,0 +1,6 @@
+# Development overrides for infra-stack.
+infraNamespace: infra-dev
+suiviItemNamespace: suivi-item-dev
+
+ingressDomain: dev.lucasduport.cc
+isDev: true

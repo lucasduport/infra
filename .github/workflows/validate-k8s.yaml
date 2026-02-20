@@ -1,0 +1,62 @@
+name: Validate Helm Chart
+
+on:
+  push:
+    branches:
+      - 'dev/**'
+      - main
+    paths:
+      - 'k8s/helm-charts/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'k8s/helm-charts/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Install kubeconform
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
+            | tar xz -C /usr/local/bin
+
+      - name: Helm Lint
+        working-directory: k8s/helm-charts/infra
+        run: helm lint .
+
+      - name: Helm Template (Dev) & Validate
+        working-directory: k8s/helm-charts/infra
+        run: |
+          helm template infra . \
+            -f values.yaml \
+            -f values-dev.yaml \
+            --set caddy.enabled=true \
+            --set gatus.enabled=true \
+            --set lldap.enabled=true \
+            --set streamShare.enabled=true \
+            --set vpn.enabled=true \
+            --set vaultwarden.enabled=true \
+            --set suiviItem.enabled=true \
+            | kubeconform -strict -ignore-missing-schemas -summary
+
+      - name: Helm Template (Prod) & Validate
+        working-directory: k8s/helm-charts/infra
+        run: |
+          helm template infra . \
+            -f values.yaml \
+            --set caddy.enabled=true \
+            --set gatus.enabled=true \
+            --set lldap.enabled=true \
+            --set streamShare.enabled=true \
+            --set vpn.enabled=true \
+            --set vaultwarden.enabled=true \
+            --set suiviItem.enabled=true \
+            | kubeconform -strict -ignore-missing-schemas -summary

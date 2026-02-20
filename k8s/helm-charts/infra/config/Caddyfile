@@ -1,0 +1,75 @@
+{
+  acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+}
+
+(cloudflare_proxy) {
+  trusted_proxies 173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/24 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/13 104.24.0.0/14 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32
+}
+
+*.{{ .Values.ingressDomain }} {
+  import cloudflare_proxy
+
+  @ldap host ldap.{{ .Values.ingressDomain }}
+  handle @ldap {
+    reverse_proxy lldap.{{ .Values.infraNamespace }}.svc.cluster.local:17170
+  }
+
+  @nas host nas.{{ .Values.ingressDomain }}
+  handle @nas {
+    reverse_proxy {env.NAS_TARGET}
+  }
+
+  @tv host tv.{{ .Values.ingressDomain }}
+  handle @tv {
+    reverse_proxy stream-share.{{ .Values.infraNamespace }}.svc.cluster.local:8080
+  }
+
+  @vault host vault.{{ .Values.ingressDomain }}
+  handle @vault {
+    reverse_proxy vaultwarden.{{ .Values.infraNamespace }}.svc.cluster.local:80
+
+    @websockets {
+      header Connection *Upgrade*
+      header Upgrade websocket
+    }
+    reverse_proxy @websockets vaultwarden.{{ .Values.infraNamespace }}.svc.cluster.local:3012
+  }
+
+  @status host status.{{ .Values.ingressDomain }}
+  handle @status {
+    reverse_proxy gatus.{{ .Values.infraNamespace }}.svc.cluster.local:8080
+  }
+
+  @suivi host suivi.{{ .Values.ingressDomain }}
+  handle @suivi {
+    reverse_proxy suivi-item.{{ .Values.suiviItemNamespace }}.svc.cluster.local:80
+  }
+
+  @resume host resume.{{ .Values.ingressDomain }}
+  handle @resume {
+    redir https://portfolio.lucasduport.cc/cvs/CV_EN_2025.pdf
+  }
+
+  @cv host cv.{{ .Values.ingressDomain }}
+  handle @cv {
+    redir https://portfolio.lucasduport.cc/cvs/CV_FR_2025.pdf
+  }
+
+  @lkdn host lkdn.{{ .Values.ingressDomain }}
+  handle @lkdn {
+    redir https://www.linkedin.com/in/lucas-duport/
+  }
+
+  @www host www.{{ .Values.ingressDomain }}
+  handle @www {
+    redir https://{{ .Values.ingressDomain }}{uri}
+  }
+
+  handle {
+    respond "404 Not Found" 404
+  }
+}
+
+{{ .Values.ingressDomain }} {
+  redir https://portfolio.lucasduport.cc{uri}
+}

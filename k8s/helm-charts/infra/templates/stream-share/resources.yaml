@@ -1,0 +1,232 @@
+{{- if .Values.streamShare.enabled }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: stream-share-secrets
+  namespace: {{ .Values.infraNamespace }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    app: stream-share
+type: Opaque
+stringData:
+  {{- toYaml .Values.streamShare.secrets | nindent 2 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stream-share
+  namespace: {{ .Values.infraNamespace }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: stream-share
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: {{ .Values.infraNamespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: stream-share-config
+  namespace: {{ .Values.infraNamespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: {{ .Values.infraNamespace }}
+  labels:
+    app: postgres
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      {{- with .Values.streamShare.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: postgres
+          image: postgres:14-alpine
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: stream-share-secrets
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: stream-share-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: stream-share-secrets
+                  key: POSTGRES_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "$(POSTGRES_USER)", "-d", "$(POSTGRES_DB)"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "$(POSTGRES_USER)", "-d", "$(POSTGRES_DB)"]
+            initialDelaySeconds: 30
+            periodSeconds: 30
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stream-share
+  namespace: {{ .Values.infraNamespace }}
+  labels:
+    app: stream-share
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stream-share
+  template:
+    metadata:
+      labels:
+        app: stream-share
+    spec:
+      {{- with .Values.streamShare.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: stream-share
+          image: {{ .Values.streamShare.image }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: ADVERTISED_PORT
+              value: "443"
+            - name: REVERSE_PROXY
+              value: "true"
+            - name: GIN_MODE
+              value: "release"
+            - name: HTTPS
+              value: "1"
+            - name: XTREAM_API_GET
+              value: "true"
+            - name: CACHE_FOLDER
+              value: "/root"
+            - name: LDAP_ENABLED
+              value: "true"
+            - name: LDAP_SERVER
+              value: "lldap.{{ .Values.infraNamespace }}.svc.cluster.local:3890"
+            - name: LDAP_BASE_DN
+              value: "ou=people,{{ .Values.lldap.baseDN }}"
+            - name: LDAP_USER_ATTRIBUTE
+              value: "uid"
+            - name: LDAP_GROUP_BASE_DN
+              value: "ou=groups,{{ .Values.lldap.baseDN }}"
+            - name: LDAP_GROUP_FILTER
+              value: "(cn=iptv)"
+            - name: LDAP_REQUIRE_GROUP
+              value: "true"
+            - name: DB_HOST
+              value: "postgres.{{ .Values.infraNamespace }}.svc.cluster.local"
+            - name: DB_PORT
+              value: "5432"
+            - name: DEBUG_LOGGING
+              value: "true"
+            - name: SESSION_TIMEOUT_MINUTES
+              value: "90"
+            - name: STREAM_TIMEOUT_MINUTES
+              value: "1"
+            - name: TEMP_LINK_HOURS
+              value: "24"
+          envFrom:
+            - secretRef:
+                name: stream-share-secrets
+          volumeMounts:
+            - name: ss-config
+              mountPath: /root
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              port: 8080
+              path: /
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 8080
+              path: /
+            initialDelaySeconds: 20
+            periodSeconds: 30
+      volumes:
+        - name: ss-config
+          persistentVolumeClaim:
+            claimName: stream-share-config
+{{- end }}

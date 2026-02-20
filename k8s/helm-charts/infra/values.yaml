@@ -1,0 +1,88 @@
+# Default values for infra-stack.
+infraNamespace: infra
+suiviItemNamespace: suivi-item
+
+# Variables for external configs
+ingressDomain: lucasduport.cc
+isDev: false
+
+# Common labels for all resources
+commonLabels:
+  app.kubernetes.io/part-of: homelab
+  app.kubernetes.io/managed-by: helm
+
+# Specific service configurations
+# You can enable them one by one to iterate on your migration.
+caddy:
+  enabled: false
+  image: ghcr.io/caddybuilds/caddy-cloudflare:latest
+  replicas: 1
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: ""
+  secrets:
+    CLOUDFLARE_API_TOKEN: "CHANGE_ME"
+    NAS_TARGET: "192.168.1.10:80"
+
+gatus:
+  enabled: false
+  image: twinproduction/gatus:latest
+  replicas: 1
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: ""
+  secrets:
+    DISCORD_WEBHOOK_ALL: "CHANGE_ME"
+    DISCORD_WEBHOOK_TV: "CHANGE_ME"
+
+lldap:
+  enabled: false
+  image: lldap/lldap:latest
+  replicas: 1
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: ""
+  baseDN: "dc=lucasduport,dc=cc"
+  secrets:
+    LLDAP_JWT_SECRET: "CHANGE_ME"
+    LLDAP_KEY_SEED: "CHANGE_ME"
+    LLDAP_LDAP_USER_PASS: "CHANGE_ME"
+
+streamShare:
+  enabled: false
+  image: lucasduport/stream-share:latest
+  replicas: 1
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: ""
+  secrets:
+    POSTGRES_DB: "streamshare"
+    POSTGRES_USER: "streamshare"
+    POSTGRES_PASSWORD: "CHANGE_ME"
+
+vpn:
+  enabled: false
+  image: ghcr.io/wg-easy/wg-easy:latest
+  replicas: 1
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: ""
+  secrets:
+    WG_HOST: "CHANGE_ME"
+    PASSWORD_HASH: "CHANGE_ME"
+    WG_ENABLE_IPV6: "false"
+
+vaultwarden:
+  enabled: false
+  image: vaultwarden/server:latest
+  replicas: 1
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: ""
+  secrets:
+    ADMIN_TOKEN: "CHANGE_ME"
+    PUSH_INSTALLATION_ID: "CHANGE_ME"
+    PUSH_INSTALLATION_KEY: "CHANGE_ME"
+
+suiviItem:
+  enabled: false
+  image: registry.gitlab.com/lucasduport/suivi-item:latest
+  replicas: 1
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: ""
+  secrets:
+    SECRET_KEY: "CHANGE_ME"

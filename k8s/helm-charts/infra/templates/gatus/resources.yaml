@@ -1,0 +1,127 @@
+{{- if .Values.gatus.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gatus-config
+  namespace: {{ .Values.infraNamespace }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    app: gatus
+data:
+  config.yaml: |
+{{ tpl (.Files.Get "config/gatus.yaml") . | indent 4 }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gatus-secrets
+  namespace: {{ .Values.infraNamespace }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    app: gatus
+type: Opaque
+stringData:
+  {{- toYaml .Values.gatus.secrets | nindent 2 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gatus
+  namespace: {{ .Values.infraNamespace }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    app: gatus
+spec:
+  type: ClusterIP
+  selector:
+    app: gatus
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gatus-data
+  namespace: {{ .Values.infraNamespace }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    app: gatus
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gatus
+  namespace: {{ .Values.infraNamespace }}
+  labels:
+    {{- toYaml .Values.commonLabels | nindent 4 }}
+    app: gatus
+spec:
+  replicas: {{ .Values.gatus.replicas }}
+  selector:
+    matchLabels:
+      app: gatus
+  template:
+    metadata:
+      labels:
+        app: gatus
+      annotations:
+        checksum/config: {{ tpl (.Files.Get "config/gatus.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.gatus.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: gatus
+          image: {{ .Values.gatus.image }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - secretRef:
+                name: gatus-secrets
+          volumeMounts:
+            - name: gatus-config
+              mountPath: /config/config.yaml
+              subPath: config.yaml
+              readOnly: true
+            - name: gatus-data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              port: 8080
+              path: /
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 8080
+              path: /
+            initialDelaySeconds: 15
+            periodSeconds: 30
+      volumes:
+        - name: gatus-config
+          configMap:
+            name: gatus-config
+        - name: gatus-data
+          persistentVolumeClaim:
+            claimName: gatus-data
+{{- end }}

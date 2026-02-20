@@ -1,0 +1,100 @@
+metrics: true
+
+storage:
+  type: sqlite
+  path: /data/data.db
+
+alerting:
+  discord:
+    webhook-url: ${DISCORD_WEBHOOK_ALL}
+    default-alert:
+      failure-threshold: 5
+      success-threshold: 1
+      send-on-resolved: true
+      description: "Endpoint unhealthy{{ if .Values.isDev }} (DEV){{ end }}"
+
+ui:
+  header: "Monitoring Dashboard 👀{{ if .Values.isDev }} [DEV]{{ end }}"
+  title: "Status{{ if .Values.isDev }} (Dev){{ end }}"
+  logo: "https://portfolio.lucasduport.cc/images/avatar.png"
+  link: "https://portfolio.lucasduport.cc/"
+
+endpoints:
+  - name: "Reverse Proxy{{ if .Values.isDev }} (Dev){{ end }}"
+    group: "1. Server administration"
+    url: https://nas.{{ .Values.ingressDomain }}
+    interval: 1m
+    headers:
+      Host: "nas.{{ .Values.ingressDomain }}"
+    conditions:
+      - '[STATUS] == 200'
+    client:
+      insecure: true
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+    alerts:
+      - type: discord
+
+  - name: "NAS Dashboard{{ if .Values.isDev }} (Dev){{ end }}"
+    group: "1. Server administration"
+    url: http://${NAS_TARGET}
+    interval: 1m
+    conditions:
+      - '[STATUS] == 200'
+    client:
+      insecure: true
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+    alerts:
+      - type: discord
+
+  - name: "LDAP Dashboard{{ if .Values.isDev }} (Dev){{ end }}"
+    group: "2. Authentication"
+    url: http://lldap.{{ .Values.infraNamespace }}.svc.cluster.local:17170
+    interval: 1m
+    conditions:
+      - '[STATUS] == 200'
+    client:
+      insecure: true
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+    alerts:
+      - type: discord
+
+  - name: "TV{{ if .Values.isDev }} (Dev){{ end }}"
+    group: "3. Media"
+    url: tcp://stream-share.{{ .Values.infraNamespace }}.svc.cluster.local:8080
+    interval: 1m
+    conditions:
+      - '[CONNECTED] == true'
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+    alerts:
+      - type: discord
+        description: "TV endpoint status{{ if .Values.isDev }} (DEV){{ end }}"
+        failure-threshold: 5
+        send-on-resolved: true
+        provider-override:
+          webhook-url: ${DISCORD_WEBHOOK_TV}
+      - type: discord
+
+  - name: "Vaultwarden{{ if .Values.isDev }} (Dev){{ end }}"
+    group: "2. Authentication"
+    url: http://vaultwarden.{{ .Values.infraNamespace }}.svc.cluster.local:80
+    interval: 1m
+    conditions:
+      - '[STATUS] == 200'
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+    alerts:
+      - type: discord

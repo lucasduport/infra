@@ -1,0 +1,115 @@
+{{- if .Values.vaultwarden.enabled }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: vaultwarden-secret
+  namespace: {{ .Values.infraNamespace }}
+type: Opaque
+stringData:
+  DOMAIN: "https://vault.{{ .Values.ingressDomain }}"
+  {{- toYaml (omit .Values.vaultwarden.secrets "DOMAIN") | nindent 2 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vaultwarden
+  namespace: {{ .Values.infraNamespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: vaultwarden
+  ports:
+    - name: http
+      port: 80
+    - name: websocket
+      port: 3012
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vaultwarden-data
+  namespace: {{ .Values.infraNamespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vaultwarden
+  namespace: {{ .Values.infraNamespace }}
+  labels:
+    app: vaultwarden
+spec:
+  replicas: {{ .Values.vaultwarden.replicas }}
+  selector:
+    matchLabels:
+      app: vaultwarden
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: vaultwarden
+    spec:
+      {{- with .Values.vaultwarden.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: vaultwarden
+          image: {{ .Values.vaultwarden.image }}
+          ports:
+            - name: http
+              containerPort: 80
+            - name: websocket
+              containerPort: 3012
+          env:
+            - name: DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-secret
+                  key: DOMAIN
+            - name: ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-secret
+                  key: ADMIN_TOKEN
+            - name: SIGNUPS_ALLOWED
+              value: "false"
+            - name: WEBSOCKET_ENABLED
+              value: "true"
+            - name: PUSH_ENABLED
+              value: "true"
+            - name: PUSH_INSTALLATION_ID
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-secret
+                  key: PUSH_INSTALLATION_ID
+            - name: PUSH_INSTALLATION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-secret
+                  key: PUSH_INSTALLATION_KEY
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /alive
+              port: http
+            initialDelaySeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /alive
+              port: http
+            initialDelaySeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: vaultwarden-data
+{{- end }}

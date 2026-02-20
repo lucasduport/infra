@@ -1,0 +1,17 @@
+{{- if or .Values.caddy.enabled .Values.gatus.enabled .Values.lldap.enabled .Values.streamShare.enabled .Values.vpn.enabled .Values.vaultwarden.enabled }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.infraNamespace }}
+  labels:
+    app.kubernetes.io/part-of: homelab
+{{- end }}
+---
+{{- if .Values.suiviItem.enabled }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.suiviItemNamespace }}
+  labels:
+    app.kubernetes.io/part-of: homelab
+{{- end }}
