@@ -6,4 +6,4 @@ ingressDomain: dev.lucasduport.cc
 isDev: true
 
 traefik:
-  enabled: true
+  enabled: false # Enable after confirming Traefik CRDs are available: kubectl get crd | grep traefik
