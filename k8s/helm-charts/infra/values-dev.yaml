@@ -2,5 +2,6 @@
 infraNamespace: infra-dev
 suiviItemNamespace: suivi-item-dev
 
-ingressDomain: dev.lucasduport.cc
+ingressDomain: lucasduport.cc
+subdomainPrefix: "dev-"
 isDev: true

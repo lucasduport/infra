@@ -4,22 +4,22 @@
 
 
 *.{{ .Values.ingressDomain }} {
-  @ldap host ldap.{{ .Values.ingressDomain }}
+  @ldap host {{ .Values.subdomainPrefix }}ldap.{{ .Values.ingressDomain }}
   handle @ldap {
     reverse_proxy lldap.{{ .Values.infraNamespace }}.svc.cluster.local:17170
   }
 
-  @nas host nas.{{ .Values.ingressDomain }}
+  @nas host {{ .Values.subdomainPrefix }}nas.{{ .Values.ingressDomain }}
   handle @nas {
     reverse_proxy {env.NAS_TARGET}
   }
 
-  @tv host tv.{{ .Values.ingressDomain }}
+  @tv host {{ .Values.subdomainPrefix }}tv.{{ .Values.ingressDomain }}
   handle @tv {
     reverse_proxy stream-share.{{ .Values.infraNamespace }}.svc.cluster.local:8080
   }
 
-  @vault host vault.{{ .Values.ingressDomain }}
+  @vault host {{ .Values.subdomainPrefix }}vault.{{ .Values.ingressDomain }}
   handle @vault {
     reverse_proxy vaultwarden.{{ .Values.infraNamespace }}.svc.cluster.local:80
 
@@ -30,32 +30,32 @@
     reverse_proxy @websockets vaultwarden.{{ .Values.infraNamespace }}.svc.cluster.local:3012
   }
 
-  @status host status.{{ .Values.ingressDomain }}
+  @status host {{ .Values.subdomainPrefix }}status.{{ .Values.ingressDomain }}
   handle @status {
     reverse_proxy gatus.{{ .Values.infraNamespace }}.svc.cluster.local:8080
   }
 
-  @suivi host suivi.{{ .Values.ingressDomain }}
+  @suivi host {{ .Values.subdomainPrefix }}suivi.{{ .Values.ingressDomain }}
   handle @suivi {
     reverse_proxy suivi-item.{{ .Values.suiviItemNamespace }}.svc.cluster.local:80
   }
 
-  @resume host resume.{{ .Values.ingressDomain }}
+  @resume host {{ .Values.subdomainPrefix }}resume.{{ .Values.ingressDomain }}
   handle @resume {
     redir https://portfolio.lucasduport.cc/cvs/CV_EN_2025.pdf
   }
 
-  @cv host cv.{{ .Values.ingressDomain }}
+  @cv host {{ .Values.subdomainPrefix }}cv.{{ .Values.ingressDomain }}
   handle @cv {
     redir https://portfolio.lucasduport.cc/cvs/CV_FR_2025.pdf
   }
 
-  @lkdn host lkdn.{{ .Values.ingressDomain }}
+  @lkdn host {{ .Values.subdomainPrefix }}lkdn.{{ .Values.ingressDomain }}
   handle @lkdn {
     redir https://www.linkedin.com/in/lucas-duport/
   }
 
-  @www host www.{{ .Values.ingressDomain }}
+  @www host {{ .Values.subdomainPrefix }}www.{{ .Values.ingressDomain }}
   handle @www {
     redir https://{{ .Values.ingressDomain }}{uri}
   }

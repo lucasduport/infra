@@ -4,6 +4,7 @@ suiviItemNamespace: suivi-item
 
 # Variables for external configs
 ingressDomain: lucasduport.cc
+subdomainPrefix: ""
 isDev: false
 
 # Common labels for all resources

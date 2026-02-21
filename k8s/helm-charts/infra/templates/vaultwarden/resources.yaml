@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Values.infraNamespace }}
 type: Opaque
 stringData:
-  DOMAIN: "https://vault.{{ .Values.ingressDomain }}"
+  DOMAIN: "https://{{ .Values.subdomainPrefix }}vault.{{ .Values.ingressDomain }}"
   DATABASE_URL: {{ default (printf "postgresql://postgres:%s@postgres.%s.svc.cluster.local:5432/vaultwarden" .Values.postgres.rootPassword .Values.infraNamespace) .Values.vaultwarden.secrets.DATABASE_URL | quote }}
   {{- toYaml (omit (required "vaultwarden.secrets are required (defined in my-secrets.yaml)" .Values.vaultwarden.secrets) "DOMAIN" "DATABASE_URL") | nindent 2 }}
 ---
