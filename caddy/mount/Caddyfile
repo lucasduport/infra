@@ -2,13 +2,6 @@
 	acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
 }
 
-*.dev.lucasduport.cc {
-	reverse_proxy 192.168.1.201:80 {
-		header_up Host {host}
-		header_up X-Forwarded-Proto {scheme}
-	}
-}
-
 *.lucasduport.cc {
 	@ldap host ldap.lucasduport.cc
 	handle @ldap {
@@ -53,6 +46,16 @@
 	@www host www.lucasduport.cc
 	handle @www {
 		redir https://lucasduport.cc{uri}
+	}
+
+	# Dev services → k3s Traefik (Caddy terminates TLS, forwards plain HTTP)
+	@dev {
+		host vault-dev.lucasduport.cc ldap-dev.lucasduport.cc status-dev.lucasduport.cc tv-dev.lucasduport.cc nas-dev.lucasduport.cc suivi-dev.lucasduport.cc
+	}
+	handle @dev {
+		reverse_proxy 192.168.1.201:80 {
+			header_up Host {host}
+		}
 	}
 
 	# Default handler for this site
