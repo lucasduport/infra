@@ -43,6 +43,12 @@
 		redir https://www.linkedin.com/in/lucas-duport/
 	}
 
+	@dev host dev-*.lucasduport.cc
+	handle @dev {
+		# Forward dev traffic to the Kubernetes dev Caddy on port 8080
+		reverse_proxy 192.168.1.201:8080
+	}
+
 	@www host www.lucasduport.cc
 	handle @www {
 		redir https://lucasduport.cc{uri}
