@@ -36,6 +36,7 @@ Deploy the chart with `externalSecrets.enabled` set to **false**. This tells the
 
 ```bash
 helm upgrade --install infra-dev ./k8s/helm-charts/infra \
+  -n infra-dev --create-namespace \
   -f ./k8s/helm-charts/infra/values-dev.yaml \
   --set externalSecrets.enabled=false \
   --set vaultwarden.enabled=true \
@@ -83,6 +84,7 @@ Update your deployment to enable ESO. This will switch the source of secrets fro
 
 ```bash
 helm upgrade --install infra-dev ./k8s/helm-charts/infra \
+  -n infra-dev \
   -f ./k8s/helm-charts/infra/values-dev.yaml \
   --set externalSecrets.enabled=true
 ```
