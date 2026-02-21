@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Values.infraNamespace }}
 type: Opaque
 stringData:
-  {{- toYaml .Values.vpn.secrets | nindent 2 }}
+  {{- toYaml (required "vpn.secrets are required (defined in my-secrets.yaml)" .Values.vpn.secrets) | nindent 2 }}
 ---
 apiVersion: v1
 kind: Service

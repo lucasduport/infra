@@ -19,9 +19,13 @@ caddy:
   replicas: 1
   nodeSelector:
     node-role.kubernetes.io/control-plane: ""
-  secrets:
-    CLOUDFLARE_API_TOKEN: "CHANGE_ME"
-    NAS_TARGET: "192.168.1.10:80"
+
+postgres:
+  enabled: true
+  image: postgres:16-alpine
+  storageSize: 50Gi
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: ""
 
 gatus:
   enabled: false
@@ -29,9 +33,6 @@ gatus:
   replicas: 1
   nodeSelector:
     node-role.kubernetes.io/control-plane: ""
-  secrets:
-    DISCORD_WEBHOOK_ALL: "CHANGE_ME"
-    DISCORD_WEBHOOK_TV: "CHANGE_ME"
 
 lldap:
   enabled: false
@@ -40,21 +41,13 @@ lldap:
   nodeSelector:
     node-role.kubernetes.io/control-plane: ""
   baseDN: "dc=lucasduport,dc=cc"
-  secrets:
-    LLDAP_JWT_SECRET: "CHANGE_ME"
-    LLDAP_KEY_SEED: "CHANGE_ME"
-    LLDAP_LDAP_USER_PASS: "CHANGE_ME"
 
 streamShare:
   enabled: false
-  image: lucasduport/stream-share:latest
+  image: ghcr.io/lucasduport/stream-share:latest
   replicas: 1
   nodeSelector:
     node-role.kubernetes.io/control-plane: ""
-  secrets:
-    POSTGRES_DB: "streamshare"
-    POSTGRES_USER: "streamshare"
-    POSTGRES_PASSWORD: "CHANGE_ME"
 
 vpn:
   enabled: false
@@ -62,10 +55,6 @@ vpn:
   replicas: 1
   nodeSelector:
     node-role.kubernetes.io/control-plane: ""
-  secrets:
-    WG_HOST: "CHANGE_ME"
-    PASSWORD_HASH: "CHANGE_ME"
-    WG_ENABLE_IPV6: "false"
 
 vaultwarden:
   enabled: false
@@ -73,16 +62,10 @@ vaultwarden:
   replicas: 1
   nodeSelector:
     node-role.kubernetes.io/control-plane: ""
-  secrets:
-    ADMIN_TOKEN: "CHANGE_ME"
-    PUSH_INSTALLATION_ID: "CHANGE_ME"
-    PUSH_INSTALLATION_KEY: "CHANGE_ME"
 
 suiviItem:
   enabled: false
-  image: registry.gitlab.com/lucasduport/suivi-item:latest
+  image: ghcr.io/lucasduport/suivi-item:latest
   replicas: 1
   nodeSelector:
     node-role.kubernetes.io/control-plane: ""
-  secrets:
-    SECRET_KEY: "CHANGE_ME"

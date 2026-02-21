@@ -7,7 +7,8 @@ metadata:
 type: Opaque
 stringData:
   DOMAIN: "https://vault.{{ .Values.ingressDomain }}"
-  {{- toYaml (omit .Values.vaultwarden.secrets "DOMAIN") | nindent 2 }}
+  DATABASE_URL: {{ default (printf "postgresql://postgres:%s@postgres.%s.svc.cluster.local:5432/vaultwarden" .Values.postgres.rootPassword .Values.infraNamespace) .Values.vaultwarden.secrets.DATABASE_URL | quote }}
+  {{- toYaml (omit (required "vaultwarden.secrets are required (defined in my-secrets.yaml)" .Values.vaultwarden.secrets) "DOMAIN" "DATABASE_URL") | nindent 2 }}
 ---
 apiVersion: v1
 kind: Service
@@ -95,6 +96,11 @@ spec:
                 secretKeyRef:
                   name: vaultwarden-secret
                   key: PUSH_INSTALLATION_KEY
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-secret
+                  key: DATABASE_URL
           volumeMounts:
             - name: data
               mountPath: /data

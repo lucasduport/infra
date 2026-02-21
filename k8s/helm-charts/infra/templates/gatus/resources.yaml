@@ -21,7 +21,7 @@ metadata:
     app: gatus
 type: Opaque
 stringData:
-  {{- toYaml .Values.gatus.secrets | nindent 2 }}
+  {{- toYaml (required "gatus.secrets are required (defined in my-secrets.yaml)" .Values.gatus.secrets) | nindent 2 }}
 ---
 apiVersion: v1
 kind: Service

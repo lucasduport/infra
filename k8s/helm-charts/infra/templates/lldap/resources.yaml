@@ -9,7 +9,7 @@ metadata:
     app: lldap
 type: Opaque
 stringData:
-  {{- toYaml .Values.lldap.secrets | nindent 2 }}
+  {{- toYaml (required "lldap.secrets are required (defined in my-secrets.yaml)" .Values.lldap.secrets) | nindent 2 }}
 ---
 apiVersion: v1
 kind: Service
