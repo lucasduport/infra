@@ -89,6 +89,7 @@ spec:
   replicas: {{ .Values.caddy.replicas }}
   strategy:
     type: Recreate
+    rollingUpdate: null
   selector:
     matchLabels:
       app: caddy
