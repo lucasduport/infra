@@ -21,7 +21,7 @@ caddy:
   image: ghcr.io/caddybuilds/caddy-cloudflare:latest
   replicas: 1
   nodeSelector:
-    node-role.kubernetes.io/control-plane: ""
+    node-role.kubernetes.io/control-plane: "true"
   secrets: {}
 
 postgres:
@@ -30,14 +30,14 @@ postgres:
   storageSize: 50Gi
   rootPassword: ""
   nodeSelector:
-    node-role.kubernetes.io/control-plane: ""
+    node-role.kubernetes.io/control-plane: "true"
 
 gatus:
   enabled: false
   image: twinproduction/gatus:latest
   replicas: 1
   nodeSelector:
-    node-role.kubernetes.io/control-plane: ""
+    node-role.kubernetes.io/control-plane: "true"
   secrets: {}
 
 lldap:
@@ -45,7 +45,7 @@ lldap:
   image: lldap/lldap:latest
   replicas: 1
   nodeSelector:
-    node-role.kubernetes.io/control-plane: ""
+    node-role.kubernetes.io/control-plane: "true"
   baseDN: "dc=lucasduport,dc=cc"
   secrets: {}
 
@@ -54,7 +54,7 @@ streamShare:
   image: ghcr.io/lucasduport/stream-share:latest
   replicas: 1
   nodeSelector:
-    node-role.kubernetes.io/control-plane: ""
+    node-role.kubernetes.io/control-plane: "true"
   secrets: {}
 
 vpn:
@@ -62,7 +62,7 @@ vpn:
   image: ghcr.io/wg-easy/wg-easy:latest
   replicas: 1
   nodeSelector:
-    node-role.kubernetes.io/control-plane: ""
+    node-role.kubernetes.io/control-plane: "true"
   secrets: {}
 
 vaultwarden:
@@ -70,7 +70,7 @@ vaultwarden:
   image: vaultwarden/server:latest
   replicas: 1
   nodeSelector:
-    node-role.kubernetes.io/control-plane: ""
+    node-role.kubernetes.io/control-plane: "true"
   secrets: {}
 
 suiviItem:
@@ -78,5 +78,5 @@ suiviItem:
   image: ghcr.io/lucasduport/suivi-item:latest
   replicas: 1
   nodeSelector:
-    node-role.kubernetes.io/control-plane: ""
+    node-role.kubernetes.io/control-plane: "true"
   secrets: {}
