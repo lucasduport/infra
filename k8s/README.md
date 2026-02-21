@@ -18,6 +18,7 @@ k3s cluster
 ```
 
 - **Namespace**: `infra` (prod) / `infra-dev` (dev)
+- **Experimental Setup**: See [ARCHITECTURE_DEV.md](ARCHITECTURE_DEV.md) for details on exposing the dev environment on a single IP.
 - **Storage**: local-path (k3s default)
 - **Ingress**: Caddy with Cloudflare DNS challenge (not Traefik)
 - **Secrets**: Kubernetes Secrets (managed via Helm values or manually)

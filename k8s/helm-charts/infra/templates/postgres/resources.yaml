@@ -12,6 +12,16 @@ stringData:
   POSTGRES_PASSWORD: {{ required "postgres.rootPassword is required (defined in my-secrets.yaml)" .Values.postgres.rootPassword | quote }}
 ---
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-script
+  namespace: {{ .Values.infraNamespace }}
+data:
+  init.sql: |
+    CREATE DATABASE vaultwarden;
+    CREATE DATABASE streamshare;
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: postgres
@@ -49,6 +59,10 @@ spec:
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+        - name: init-scripts
+          configMap:
+            name: postgres-init-script
       containers:
         - name: postgres
           image: {{ .Values.postgres.image }}
@@ -66,6 +80,8 @@ spec:
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d
           livenessProbe:
             exec:
               command: ["pg_isready", "-U", "postgres"]
