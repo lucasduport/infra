@@ -43,10 +43,15 @@
 		redir https://www.linkedin.com/in/lucas-duport/
 	}
 
-	@dev host dev-*.lucasduport.cc
+	@dev {
+		header_regexp host Host ^dev-.*\.lucasduport\.cc$
+	}
 	handle @dev {
 		# Forward dev traffic to the Kubernetes dev Caddy on port 8080
-		reverse_proxy 192.168.1.201:8080
+		reverse_proxy 192.168.1.201:8080 {
+			header_up Host {host}
+			header_up X-Forwarded-Proto {scheme}
+		}
 	}
 
 	@www host www.lucasduport.cc
@@ -56,7 +61,7 @@
 
 	# Default handler for this site
 	handle {
-		respond "404 Not Found" 404
+		respond "404 Not Found (Production Caddy)" 404
 	}
 }
 
