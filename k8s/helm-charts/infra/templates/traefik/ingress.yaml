@@ -8,7 +8,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.tls: "true"
-    {{- if .Values.traefik.certResolver }}
+    {{- if and .Values.traefik.certResolver (ne .Values.traefik.certResolver "false") }}
     traefik.ingress.kubernetes.io/router.tls.certresolver: {{ .Values.traefik.certResolver | quote }}
     {{- end }}
     {{- if .Values.externalDns.enabled }}
@@ -93,7 +93,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.tls: "true"
-    {{- if .Values.traefik.certResolver }}
+    {{- if and .Values.traefik.certResolver (ne .Values.traefik.certResolver "false") }}
     traefik.ingress.kubernetes.io/router.tls.certresolver: {{ .Values.traefik.certResolver | quote }}
     {{- end }}
     {{- if .Values.externalDns.enabled }}
