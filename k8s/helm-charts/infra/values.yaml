@@ -11,19 +11,24 @@ commonLabels:
   app.kubernetes.io/part-of: homelab
   app.kubernetes.io/managed-by: helm
 
+# Specific configurations for multiple services
+common:
+  ghcrAuth: "" # GitHub token
+
 # Specific service configurations
-# You can enable them one by one to iterate on your migration.
 caddy:
   enabled: false
   image: ghcr.io/caddybuilds/caddy-cloudflare:latest
   replicas: 1
   nodeSelector:
     node-role.kubernetes.io/control-plane: ""
+  secrets: {}
 
 postgres:
-  enabled: true
+  enabled: false
   image: postgres:16-alpine
   storageSize: 50Gi
+  rootPassword: ""
   nodeSelector:
     node-role.kubernetes.io/control-plane: ""
 
@@ -33,6 +38,7 @@ gatus:
   replicas: 1
   nodeSelector:
     node-role.kubernetes.io/control-plane: ""
+  secrets: {}
 
 lldap:
   enabled: false
@@ -41,6 +47,7 @@ lldap:
   nodeSelector:
     node-role.kubernetes.io/control-plane: ""
   baseDN: "dc=lucasduport,dc=cc"
+  secrets: {}
 
 streamShare:
   enabled: false
@@ -48,6 +55,7 @@ streamShare:
   replicas: 1
   nodeSelector:
     node-role.kubernetes.io/control-plane: ""
+  secrets: {}
 
 vpn:
   enabled: false
@@ -55,6 +63,7 @@ vpn:
   replicas: 1
   nodeSelector:
     node-role.kubernetes.io/control-plane: ""
+  secrets: {}
 
 vaultwarden:
   enabled: false
@@ -62,6 +71,7 @@ vaultwarden:
   replicas: 1
   nodeSelector:
     node-role.kubernetes.io/control-plane: ""
+  secrets: {}
 
 suiviItem:
   enabled: false
@@ -69,3 +79,4 @@ suiviItem:
   replicas: 1
   nodeSelector:
     node-role.kubernetes.io/control-plane: ""
+  secrets: {}

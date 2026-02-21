@@ -12,7 +12,7 @@ services:
       REVERSE_PROXY: "true"
       GIN_MODE: "release"              # Gin mode (debug or release) - read by Gin automatically if set
       HTTPS: "1"                       # Use HTTPS in generated URLs
-      
+
       # Xtream Configuration
       XTREAM_USER: "${XTREAM_USER}"          # Xtream API username
       XTREAM_PASSWORD: "${XTREAM_PASSWORD}"        # Xtream API password
@@ -35,7 +35,7 @@ services:
       LDAP_REQUIRE_GROUP: "true"
 
       # Database Configuration
-      DB_HOST: "db"                    # Postgres hostname 
+      DB_HOST: "db"                    # Postgres hostname
       DB_PORT: "5432"                  # Postgres port
       DB_NAME: "${POSTGRES_DB}"             # Postgres database name
       DB_USER: "${POSTGRES_USER}"             # Postgres username
@@ -56,7 +56,7 @@ services:
 
     depends_on:
       - db
-      
+
   # PostgreSQL database
   db:
     image: postgres:14-alpine
@@ -72,7 +72,7 @@ services:
     # Uncomment to expose PostgreSQL port for external access
     # ports:
     #  - "5432:5432"
-    
+
   # Adminer for database management (optional)
   # adminer:
   #   image: adminer

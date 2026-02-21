@@ -1,0 +1,49 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+        exclude: "k8s/helm-charts/infra/templates/.*" # Helm templates are not pure YAML
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  - repo: local
+    hooks:
+      - id: helm-lint
+        name: Helm Lint
+        entry: bash -c "cd k8s/helm-charts/infra && helm lint ."
+        language: system
+        files: 'k8s/helm-charts/infra/.*'
+        pass_filenames: false
+
+      - id: helm-template-validate
+        name: Helm Template & Validate (kubeconform)
+        entry: bash -c "helm template infra k8s/helm-charts/infra \
+          --set caddy.enabled=true \
+          --set gatus.enabled=true \
+          --set lldap.enabled=true \
+          --set streamShare.enabled=true \
+          --set vpn.enabled=true \
+          --set vaultwarden.enabled=true \
+          --set suiviItem.enabled=true \
+          --set postgres.enabled=true \
+          --set postgres.rootPassword=dummy \
+          --set caddy.secrets.CLOUDFLARE_API_TOKEN=dummy \
+          --set lldap.secrets.LLDAP_JWT_SECRET=dummy \
+          --set lldap.secrets.LLDAP_KEY_SEED=dummy \
+          --set lldap.secrets.LLDAP_LDAP_USER_PASS=dummy \
+          --set gatus.secrets.DISCORD_WEBHOOK_ALL=dummy \
+          --set streamShare.secrets.POSTGRES_PASSWORD=dummy \
+          --set vpn.secrets.WG_HOST=dummy \
+          --set vpn.secrets.PASSWORD_HASH=dummy \
+          --set vaultwarden.secrets.ADMIN_TOKEN=dummy \
+          --set suiviItem.secrets.SECRET_KEY=dummy \
+          --set common.ghcrAuth=dummy \
+          | kubeconform -strict -ignore-missing-schemas -summary"
+        language: system
+        files: 'k8s/helm-charts/infra/templates/.*'
+        pass_filenames: false
