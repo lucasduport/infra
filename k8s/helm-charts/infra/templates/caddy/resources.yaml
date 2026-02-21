@@ -87,6 +87,8 @@ metadata:
     app: caddy
 spec:
   replicas: {{ .Values.caddy.replicas }}
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: caddy

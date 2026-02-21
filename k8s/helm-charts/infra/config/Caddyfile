@@ -2,14 +2,8 @@
   acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
 }
 
-(cloudflare_proxy) {
-  # Add Cloudflare IP ranges to trusted_proxies
-  header_up X-Forwarded-For {remote_host}
-}
 
 *.{{ .Values.ingressDomain }} {
-  import cloudflare_proxy
-
   @ldap host ldap.{{ .Values.ingressDomain }}
   handle @ldap {
     reverse_proxy lldap.{{ .Values.infraNamespace }}.svc.cluster.local:17170
