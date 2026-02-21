@@ -32,12 +32,17 @@ http://*.{{ .Values.ingressDomain }}, *.{{ .Values.ingressDomain }} {
 
   @vault host {{ .Values.subdomainPrefix }}vault.{{ .Values.ingressDomain }}
   handle @vault {
-    @websockets {
-      header Connection *Upgrade*
-      header Upgrade websocket
+    reverse_proxy vaultwarden.{{ .Values.infraNamespace }}.svc.cluster.local:80 {
+      header_up X-Real-IP {remote_host}
     }
-    reverse_proxy @websockets vaultwarden.{{ .Values.infraNamespace }}.svc.cluster.local:3012
-    reverse_proxy vaultwarden.{{ .Values.infraNamespace }}.svc.cluster.local:80
+  }
+
+  @vault-ws {
+    host {{ .Values.subdomainPrefix }}vault.{{ .Values.ingressDomain }}
+    path /notifications/hub*
+  }
+  handle @vault-ws {
+    reverse_proxy vaultwarden.{{ .Values.infraNamespace }}.svc.cluster.local:3012
   }
 
   @suivi host {{ .Values.subdomainPrefix }}suivi.{{ .Values.ingressDomain }}
