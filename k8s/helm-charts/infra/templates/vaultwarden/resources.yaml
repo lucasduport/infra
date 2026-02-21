@@ -84,6 +84,7 @@ spec:
               value: "false"
             - name: WEBSOCKET_ENABLED
               value: "true"
+            {{- if .Values.vaultwarden.secrets.PUSH_INSTALLATION_ID }}
             - name: PUSH_ENABLED
               value: "true"
             - name: PUSH_INSTALLATION_ID
@@ -96,6 +97,10 @@ spec:
                 secretKeyRef:
                   name: vaultwarden-secret
                   key: PUSH_INSTALLATION_KEY
+            {{- else }}
+            - name: PUSH_ENABLED
+              value: "false"
+            {{- end }}
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
