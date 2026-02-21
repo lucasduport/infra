@@ -4,6 +4,10 @@
 
 
 *.{{ .Values.ingressDomain }} {
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+
   @ldap host {{ .Values.subdomainPrefix }}ldap.{{ .Values.ingressDomain }}
   handle @ldap {
     reverse_proxy lldap.{{ .Values.infraNamespace }}.svc.cluster.local:17170
@@ -61,7 +65,11 @@
   }
 
   handle {
-    respond "404 Not Found" 404
+    {{- if .Values.isDev }}
+    respond "404 Not Found (Dev Kubernetes Caddy)" 404
+    {{- else }}
+    respond "404 Not Found (Production Kubernetes Caddy)" 404
+    {{- end }}
   }
 }
 

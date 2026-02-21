@@ -56,7 +56,7 @@
 
 	# Default handler for this site
 	handle {
-		respond "404 Not Found" 404
+		respond "404 Not Found (Production Caddy)" 404
 	}
 }
 
