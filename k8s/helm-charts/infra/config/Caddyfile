@@ -4,7 +4,7 @@
 }
 
 
-*.{{ .Values.ingressDomain }} {
+http://*.{{ .Values.ingressDomain }}, *.{{ .Values.ingressDomain }} {
   tls {
     dns cloudflare {env.CLOUDFLARE_API_TOKEN}
   }
