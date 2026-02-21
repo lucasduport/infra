@@ -9,7 +9,7 @@ metadata:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.tls: "true"
     {{- if .Values.traefik.certResolver }}
-    traefik.ingress.kubernetes.io/router.tls.certresolver: {{ .Values.traefik.certResolver }}
+    traefik.ingress.kubernetes.io/router.tls.certresolver: {{ .Values.traefik.certResolver | quote }}
     {{- end }}
     {{- if .Values.externalDns.enabled }}
     external-dns.alpha.kubernetes.io/proxied: {{ .Values.externalDns.proxied | quote }}
@@ -94,7 +94,7 @@ metadata:
     kubernetes.io/ingress.class: traefik
     traefik.ingress.kubernetes.io/router.tls: "true"
     {{- if .Values.traefik.certResolver }}
-    traefik.ingress.kubernetes.io/router.tls.certresolver: {{ .Values.traefik.certResolver }}
+    traefik.ingress.kubernetes.io/router.tls.certresolver: {{ .Values.traefik.certResolver | quote }}
     {{- end }}
     {{- if .Values.externalDns.enabled }}
     external-dns.alpha.kubernetes.io/proxied: {{ .Values.externalDns.proxied | quote }}
