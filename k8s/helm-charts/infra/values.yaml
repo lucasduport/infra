@@ -23,6 +23,8 @@ caddy:
   replicas: 1
   nodeSelector:
     node-role.kubernetes.io/control-plane: "true"
+  httpPort: 80
+  httpsPort: 443
   secrets: {}
 
 postgres:
