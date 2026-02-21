@@ -1,5 +1,5 @@
 {{- if .Values.traefik.enabled }}
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: redirect-portfolio
@@ -9,7 +9,7 @@ spec:
     regex: "^https?://{{ .Values.ingressDomain }}/(.*)"
     replacement: "https://portfolio.lucasduport.cc/${1}"
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: redirect-cv-en
@@ -19,7 +19,7 @@ spec:
     regex: "^https?://resume.{{ .Values.ingressDomain }}/(.*)"
     replacement: "https://portfolio.lucasduport.cc/cvs/CV_EN_2025.pdf"
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: redirect-cv-fr
@@ -29,7 +29,7 @@ spec:
     regex: "^https?://cv.{{ .Values.ingressDomain }}/(.*)"
     replacement: "https://portfolio.lucasduport.cc/cvs/CV_FR_2025.pdf"
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: redirect-linkedin
@@ -39,7 +39,7 @@ spec:
     regex: "^https?://lkdn.{{ .Values.ingressDomain }}/(.*)"
     replacement: "https://www.linkedin.com/in/lucas-duport/"
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: redirect-www

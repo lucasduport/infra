@@ -9,6 +9,7 @@ This guide explains how to deploy your infrastructure from scratch, following th
   - `cert-manager`
   - `external-dns`
   - `external-secrets`
+  - `traefik` (required for `Middleware` CRDs — bundled with k3s unless disabled with `--disable=traefik`)
 
 ---
 

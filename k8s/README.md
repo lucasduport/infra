@@ -35,11 +35,17 @@ Refer to the **[Step-by-Step Deployment Guide](DEPLOYMENT.md)** for detailed ins
 ### 2. Install Core Operators
 Run these once on the cluster to enable automation:
 
+> **Note:** If k3s was installed with `--disable=traefik` (or you are not using k3s), you must install Traefik manually. Traefik provides the `Middleware` CRDs required by this chart.
+
 ```bash
 # Register needed Helm repositories
+helm repo add traefik https://helm.traefik.io/traefik
 helm repo add external-secrets https://charts.external-secrets.io
 helm repo add external-dns https://kubernetes-sigs.github.io/external-dns/
 helm repo update
+
+# Install Traefik (required for Middleware CRDs — skip if k3s ships it already)
+helm install traefik traefik/traefik -n kube-system
 
 # Install External Secrets Operator
 helm install external-secrets external-secrets/external-secrets \
