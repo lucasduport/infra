@@ -1,20 +1,33 @@
-# Development Environment Architecture
+# Infrastructure & Domain Strategy
 
-This document explains how the development environment (`infra-dev`) is exposed to the internet alongside the production environment, given the limitation of a single public IP and a single port 443.
+This document explains how the production and development environments are managed and exposed via a single public IP.
 
-## The Challenge
-*   **Single Public IP**: The router can only forward port 443 to one internal IP.
-*   **Port Conflict**: Port 443 is already used by the Production Caddy (running in Docker).
-*   **Domain Depth**: Cloudflare's free SSL certificates do not support 2nd-level wildcards (e.g., `*.dev.lucasduport.cc` fails).
+## 1. Domain Architecture
+To provide a clean separation between environments while staying within Cloudflare's free-tier limitations:
 
-## The Solution: Chained Caddy Reverse Proxy
+- **Production**: Root-level subdomains (`app.lucasduport.cc`).
+- **Development**: Nested subdomains (`app.dev.lucasduport.cc`).
 
-We use a "Gateway" architecture where the Production Caddy forwards traffic for development subdomains to the Kubernetes node.
+## 2. Ingress & Routing (Traefik)
+The k3s cluster uses the native **Traefik Ingress Controller**.
+- It listens on ports **80** and **443** (Host Network).
+- It routes traffic based on the `Host` header defined in [Ingress resources](helm-charts/infra/templates/traefik/ingress.yaml).
 
-### 1. DNS Strategy (Flat Subdomains)
-To stay within Cloudflare's SSL limits, we use a prefix instead of a nested subdomain:
-*   **Production**: `status.lucasduport.cc`
-*   **Development**: `dev-status.lucasduport.cc`
+## 3. DNS Automation (ExternalDNS)
+We use `external-dns` to synchronize Kubernetes Ingress hosts with Cloudflare DNS records.
+- **Provider**: Cloudflare.
+- **Policy**: `sync` (automatically creates and deletes records).
+- **Proxy Status**: Disabled (Grey Cloud).
+
+> **Why Grey Cloud?**
+> Cloudflare's free tier does not support SSL for nested wildcards like `*.dev.lucasduport.cc`. By using "Grey Cloud" (DNS only), we let **Traefik + cert-manager** handle the TLS certificates locally via Let's Encrypt, bypassing Cloudflare's proxy limitations.
+
+## 4. SSL/TLS (cert-manager)
+- **Issuer**: Let's Encrypt (Production).
+- **Challenge Type**: HTTP-01 (handled automatically via Traefik).
+
+## 5. Traffic Flow
+`User` -> `Your Public IP` -> `Router (443)` -> `k3s Node (Traefik)` -> `Namespace (Prod/Dev)` -> `Service Pod`
 
 ### 2. Production Caddy Configuration (Gateway)
 The Production Caddy (Docker) is configured to match `dev-*` subdomains and forward them to the Kubernetes node on a specific port (**8080**).

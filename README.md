@@ -1,23 +1,22 @@
 # Infra
 
-Minimal Docker GitOps for personal services.
+Modern Kubernetes GitOps for personal services.
 
-## Repo layout
-- caddy/ — reverse proxy (Caddy)
-- lldap/ — LDAP server (LLDAP)
-- stream-share/ — IPTV proxy app + Postgres
-- vpn/ — WireGuard VPN with web UI (wg-easy)
-- gatus/ — Uptime monitoring
-- archives/ — deprecated/old compose files
+## Architecture
+- **Orchestration**: k3s (Kubernetes)
+- **Ingress/Proxy**: Traefik (native k3s ingress controller)
+- **GitOps**: Argo CD (Syncing `main` and `dev/migration_kubernetes` branches)
+- **Secret Management**: External Secrets Operator (ESO) + Vaultwarden (Bitwarden API)
+- **DNS Automation**: ExternalDNS + Cloudflare (Automatic A/CNAME updates)
+- **Certificates**: cert-manager (Let's Encrypt / HTTP-01 challenge)
 
-## Secrets & env
-- Keep all secrets out of Git. Use .env.example for placeholders only.
-- Set real values in Portainer’s Environment tab per stack.
+## Structure
+- `k8s/` — Kubernetes manifests & Helm charts (Source of truth)
+- `archives/` — Old Docker Compose files (No longer actively used)
 
-## Importing stacks via Portainer (workaround)
-- Use Portainer Enterprise (free up to 3 nodes) to enable Relative path volumes.
-- On the target environment (endpoint) in Portainer: Settings -> Security & Volumes:
-	- Enable “Relative path volumes” and set the Stack base path to the same folder.
-- Deploy stacks from Git, selecting the compose file (e.g., `caddy/docker-compose.yml`, `gatus/docker-compose.yml`, etc.).
-	- Any bind like `./caddy/mount:/etc/caddy` will resolve to `<Stack base path>/caddy/` on the host. In my case: `/data/compose/portainer-compose-unpacker/stacks/caddy/`
-- Docs: https://docs.portainer.io/advanced/relative-paths
+## Getting Started
+See the [Kubernetes documentation](k8s/README.md) for cluster setup and deployment instructions.
+For secret management details, refer to [SECRETS.md](k8s/SECRETS.md).
+
+---
+*Historically managed via Docker Compose & Portainer. Migration to k3s completed in Feb 2026.*

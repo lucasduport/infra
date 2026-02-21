@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: infra-prod
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/lucasduport/infra.git
+    targetRevision: main
+    path: k8s/helm-charts/infra
+    helm:
+      valueFiles:
+        - values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: infra
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: infra-dev
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/lucasduport/infra.git
+    targetRevision: dev/migration_kubernetes
+    path: k8s/helm-charts/infra
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-dev.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: infra-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

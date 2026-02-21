@@ -1,17 +1,5 @@
 {{- if .Values.postgres.enabled }}
 apiVersion: v1
-kind: Secret
-metadata:
-  name: postgres-secrets
-  namespace: {{ .Values.infraNamespace }}
-  labels:
-    {{- toYaml .Values.commonLabels | nindent 4 }}
-    app: postgres
-type: Opaque
-stringData:
-  POSTGRES_PASSWORD: {{ required "postgres.rootPassword is required (defined in my-secrets.yaml)" .Values.postgres.rootPassword | quote }}
----
-apiVersion: v1
 kind: ConfigMap
 metadata:
   name: postgres-init-script

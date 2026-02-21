@@ -1,0 +1,176 @@
+{{- if .Values.traefik.enabled }}
+# Main Ingress for services
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: services-ingress
+  namespace: {{ .Values.infraNamespace }}
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    {{- if .Values.traefik.certResolver }}
+    traefik.ingress.kubernetes.io/router.tls.certresolver: {{ .Values.traefik.certResolver }}
+    {{- end }}
+    {{- if .Values.externalDns.enabled }}
+    external-dns.alpha.kubernetes.io/proxied: {{ .Values.externalDns.proxied | quote }}
+    {{- end }}
+spec:
+  rules:
+    {{- if .Values.lldap.enabled }}
+    - host: ldap.{{ .Values.ingressDomain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: lldap
+                port:
+                  number: 17170
+    {{- end }}
+    {{- if .Values.gatus.enabled }}
+    - host: status.{{ .Values.ingressDomain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gatus
+                port:
+                  number: 8080
+    {{- end }}
+    {{- if .Values.streamShare.enabled }}
+    - host: tv.{{ .Values.ingressDomain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: stream-share
+                port:
+                  number: 8080
+    {{- end }}
+    {{- if .Values.vaultwarden.enabled }}
+    - host: vault.{{ .Values.ingressDomain }}
+      http:
+        paths:
+          - path: /notifications/hub
+            pathType: Prefix
+            backend:
+              service:
+                name: vaultwarden
+                port:
+                  number: 3012
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vaultwarden
+                port:
+                  number: 80
+    {{- end }}
+    - host: nas.{{ .Values.ingressDomain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nas-external
+                port:
+                  number: {{ .Values.traefik.nasPort }}
+
+---
+# Suivi Ingress (separate namespace)
+{{- if .Values.suiviItem.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: suivi-ingress
+  namespace: {{ .Values.suiviItemNamespace }}
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    {{- if .Values.traefik.certResolver }}
+    traefik.ingress.kubernetes.io/router.tls.certresolver: {{ .Values.traefik.certResolver }}
+    {{- end }}
+    {{- if .Values.externalDns.enabled }}
+    external-dns.alpha.kubernetes.io/proxied: {{ .Values.externalDns.proxied | quote }}
+    {{- end }}
+spec:
+  rules:
+    - host: suivi.{{ .Values.ingressDomain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: suivi-item
+                port:
+                  number: 80
+{{- end }}
+
+---
+# Redirections Ingress
+{{- $ingressNamespace := .Values.infraNamespace }}
+{{- $ingressDomain := .Values.ingressDomain }}
+{{- $proxied := .Values.externalDns.proxied }}
+{{- $externalDnsEnabled := .Values.externalDns.enabled }}
+
+{{- range $r := (list (dict "host" "resume" "mw" "redirect-cv-en") (dict "host" "cv" "mw" "redirect-cv-fr") (dict "host" "lkdn" "mw" "redirect-linkedin") (dict "host" "www" "mw" "redirect-www")) }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: redirect-{{ .host }}
+  namespace: {{ $ingressNamespace }}
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.middlewares: {{ $ingressNamespace }}-{{ .mw }}@kubernetescrd
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    {{- if $externalDnsEnabled }}
+    external-dns.alpha.kubernetes.io/proxied: {{ $proxied | quote }}
+    {{- end }}
+spec:
+  rules:
+    - host: {{ .host }}.{{ $ingressDomain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: lldap # Redirect target is handled by Middleware, not Backend
+                port:
+                  number: 17170
+---
+{{- end }}
+
+# Root domain redirect (Proxied by default on Cloudflare)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: root-redirect
+  namespace: {{ .Values.infraNamespace }}
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.middlewares: {{ .Values.infraNamespace }}-redirect-portfolio@kubernetescrd
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    {{- if .Values.externalDns.enabled }}
+    external-dns.alpha.kubernetes.io/proxied: "true"
+    {{- end }}
+spec:
+  rules:
+    - host: {{ .Values.ingressDomain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: lldap
+                port:
+                  number: 17170
+{{- end }}

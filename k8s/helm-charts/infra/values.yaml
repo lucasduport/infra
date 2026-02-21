@@ -4,7 +4,6 @@ suiviItemNamespace: suivi-item
 
 # Variables for external configs
 ingressDomain: lucasduport.cc
-subdomainPrefix: ""
 isDev: false
 
 # Common labels for all resources
@@ -17,15 +16,19 @@ common:
   ghcrAuth: "" # GitHub token
 
 # Specific service configurations
-caddy:
-  enabled: false
-  image: ghcr.io/caddybuilds/caddy-cloudflare:latest
-  replicas: 1
-  nodeSelector:
-    node-role.kubernetes.io/control-plane: "true"
-  httpPort: 80
-  httpsPort: 443
-  secrets: {}
+externalSecrets:
+  enabled: false # Enable to use ExternalSecret instead of Secret templates
+  secretStoreName: vaultwarden-store # Name of the SecretStore to use
+
+externalDns:
+  enabled: true
+  proxied: true # Sets "Orange Cloud" status in Cloudflare
+
+traefik:
+  enabled: true
+  nasIP: "192.168.1.135"
+  nasPort: 81
+  certResolver: "false"
 
 postgres:
   enabled: false

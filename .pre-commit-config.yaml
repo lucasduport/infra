@@ -23,7 +23,6 @@ repos:
       - id: helm-template-validate
         name: Helm Template & Validate (kubeconform)
         entry: bash -c "helm template infra k8s/helm-charts/infra \
-          --set caddy.enabled=true \
           --set gatus.enabled=true \
           --set lldap.enabled=true \
           --set streamShare.enabled=true \
@@ -32,7 +31,6 @@ repos:
           --set suiviItem.enabled=true \
           --set postgres.enabled=true \
           --set postgres.rootPassword=dummy \
-          --set caddy.secrets.CLOUDFLARE_API_TOKEN=dummy \
           --set lldap.secrets.LLDAP_JWT_SECRET=dummy \
           --set lldap.secrets.LLDAP_KEY_SEED=dummy \
           --set lldap.secrets.LLDAP_LDAP_USER_PASS=dummy \

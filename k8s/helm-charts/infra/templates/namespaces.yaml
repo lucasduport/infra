@@ -1,4 +1,4 @@
-{{- if or .Values.caddy.enabled .Values.gatus.enabled .Values.lldap.enabled .Values.streamShare.enabled .Values.vpn.enabled .Values.vaultwarden.enabled }}
+{{- if or .Values.gatus.enabled .Values.lldap.enabled .Values.streamShare.enabled .Values.vpn.enabled .Values.vaultwarden.enabled }}
 apiVersion: v1
 kind: Namespace
 metadata:

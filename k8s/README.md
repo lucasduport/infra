@@ -1,21 +1,71 @@
-# Kubernetes Migration
+# Kubernetes Infrastructure (k3s)
 
-Migration from Docker Compose (Portainer) to Kubernetes (k3s).
+This folder contains the complete transition from Docker Compose (Portainer) to a native **k3s (Kubernetes)** cluster managed via **GitOps (Argo CD)**.
 
-## Architecture
+## High-Level Architecture
 
+| Layer           | Implementation                               | Purpose                                      |
+|-----------------|----------------------------------------------|----------------------------------------------|
+| Orchestrator    | **k3s** (v1.28+)                             | Lightweight Kubernetes for home servers.      |
+| Ingress         | **Traefik** (Native)                         | Handles all HTTP/HTTPS traffic.              |
+| GitOps          | **Argo CD**                                  | Automated sync between GitHub and Cluster.   |
+| Secret Mgmt     | **External Secrets (ESO)**                   | Imports secrets directly from **Vaultwarden**.|
+| DNS Automation  | **ExternalDNS**                              | Auto-updates Cloudflare records for services.|
+| SSL/TLS         | **cert-manager**                             | Let's Encrypt (HTTP-01) automation.          |
+
+## Environment Isolation
+
+We maintain two distinct environments on the same cluster using separate namespaces:
+
+- **Production (`infra` namespace)**:
+  - Branch: `main`
+  - Domain: `*.lucasduport.cc`
+  - Secret Store: [vault.lucasduport.cc](https://vault.lucasduport.cc)
+- **Development (`infra-dev` namespace)**:
+  - Branch: `dev/migration_kubernetes`
+  - Domain: `*.dev.lucasduport.cc`
+  - Secret Store: [vault.dev.lucasduport.cc](https://vault.dev.lucasduport.cc)
+
+## Infrastructure Setup
+
+### 1. Bootstrap Secrets
+Before deploying, you must bootstrap the "Bridge Secrets" so the cluster can talk to your Vaultwarden instance and Cloudflare.
+Refer to [k8s/SECRETS.md](SECRETS.md) for detailed instructions.
+
+### 2. Install Core Operators
+Run these once on the cluster to enable automation:
+
+```bash
+# Register needed Helm repositories
+helm repo add external-secrets https://charts.external-secrets.io
+helm repo add external-dns https://kubernetes-sigs.github.io/external-dns/
+helm repo update
+
+# Install External Secrets Operator
+helm install external-secrets external-secrets/external-secrets \
+  -n external-secrets --create-namespace --set installCRDs=true
+
+# Install ExternalDNS (Cloudflare)
+helm install external-dns external-dns/external-dns \
+  -n kube-system --set provider=cloudflare \
+  --set env[0].name=CF_API_TOKEN --set env[0].value=YOUR_TOKEN
 ```
-k3s cluster
-├── node: vm-truenas (master + workloads)
-│   ├── caddy        (Deployment — reverse proxy / ingress)
-│   ├── lldap        (StatefulSet — LDAP authentication)
-│   ├── stream-share (Deployment — IPTV proxy)
-│   ├── postgres     (StatefulSet — PostgreSQL for stream-share)
-│   ├── wg-easy      (Deployment — WireGuard VPN, hostNetwork)
-│   └── gatus        (Deployment — uptime monitoring)
-│
-└── node: raspi (worker — lightweight services / overflow)
-```
+
+### 3. Deploy via Argo CD
+The cluster monitors the repository and automatically manages deployments.
+- **Prod Application**: Watches `main` at `k8s/helm-charts/infra` with `values.yaml`.
+- **Dev Application**: Watches `dev/migration_kubernetes` at `k8s/helm-charts/infra` with `values-dev.yaml`.
+
+## Application Layout (Helm)
+The deployment is structured as a single "App Chart" containing templates for:
+- [lldap](helm-charts/infra/templates/lldap/resources.yaml)
+- [stream-share](helm-charts/infra/templates/stream-share/resources.yaml)
+- [postgres](helm-charts/infra/templates/postgres/resources.yaml)
+- [gatus](helm-charts/infra/templates/gatus/resources.yaml)
+- [vaultwarden](helm-charts/infra/templates/vaultwarden/resources.yaml)
+- [vpn](helm-charts/infra/templates/vpn/resources.yaml)
+
+To enable/disable a service, toggle the `enabled` flag in the relevant `values.yaml` file.
 
 - **Namespace**: `infra` (prod) / `infra-dev` (dev)
 - **Experimental Setup**: See [ARCHITECTURE_DEV.md](ARCHITECTURE_DEV.md) for details on exposing the dev environment on a single IP.

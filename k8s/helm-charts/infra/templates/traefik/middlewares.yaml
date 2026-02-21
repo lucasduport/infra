@@ -1,0 +1,51 @@
+{{- if .Values.traefik.enabled }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-portfolio
+  namespace: {{ .Values.infraNamespace }}
+spec:
+  redirectRegex:
+    regex: "^https?://{{ .Values.ingressDomain }}/(.*)"
+    replacement: "https://portfolio.lucasduport.cc/${1}"
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-cv-en
+  namespace: {{ .Values.infraNamespace }}
+spec:
+  redirectRegex:
+    regex: "^https?://resume.{{ .Values.ingressDomain }}/(.*)"
+    replacement: "https://portfolio.lucasduport.cc/cvs/CV_EN_2025.pdf"
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-cv-fr
+  namespace: {{ .Values.infraNamespace }}
+spec:
+  redirectRegex:
+    regex: "^https?://cv.{{ .Values.ingressDomain }}/(.*)"
+    replacement: "https://portfolio.lucasduport.cc/cvs/CV_FR_2025.pdf"
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-linkedin
+  namespace: {{ .Values.infraNamespace }}
+spec:
+  redirectRegex:
+    regex: "^https?://lkdn.{{ .Values.ingressDomain }}/(.*)"
+    replacement: "https://www.linkedin.com/in/lucas-duport/"
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-www
+  namespace: {{ .Values.infraNamespace }}
+spec:
+  redirectRegex:
+    regex: "^https?://www.{{ .Values.ingressDomain }}/(.*)"
+    replacement: "https://{{ .Values.ingressDomain }}/${1}"
+{{- end }}

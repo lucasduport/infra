@@ -1,11 +1,9 @@
-# Development overrides for infra-stack.
+# Overrides for dev environment
 infraNamespace: infra-dev
 suiviItemNamespace: suivi-item-dev
 
-ingressDomain: lucasduport.cc
-subdomainPrefix: "dev-"
+ingressDomain: dev.lucasduport.cc
 isDev: true
 
-caddy:
-  httpPort: 8080
-  httpsPort: 8443
+traefik:
+  enabled: true
