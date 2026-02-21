@@ -2,6 +2,13 @@
 	acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
 }
 
+*.dev.lucasduport.cc {
+	reverse_proxy 192.168.1.201:80 {
+		header_up Host {host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}
+
 *.lucasduport.cc {
 	@ldap host ldap.lucasduport.cc
 	handle @ldap {
@@ -56,11 +63,5 @@
 
 lucasduport.cc {
 	redir https://portfolio.lucasduport.cc{uri}
-}
-
-*.dev.lucasduport.cc {
-	reverse_proxy 192.168.1.201:80 {
-		header_up Host {host}
-	}
 }
 
