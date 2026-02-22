@@ -23,8 +23,8 @@ We maintain two distinct environments on the same cluster using separate namespa
   - Secret Store: [vault.lucasduport.cc](https://vault.lucasduport.cc)
 - **Development (`infra-dev` namespace)**:
   - Branch: `dev/migration_kubernetes`
-  - Domain: `*.dev.lucasduport.cc`
-  - Secret Store: [vault.dev.lucasduport.cc](https://vault.dev.lucasduport.cc)
+  - Domain: `*-dev.lucasduport.cc` (covered by `*.lucasduport.cc` Cloudflare wildcard)
+  - Secret Store: [vault-dev.lucasduport.cc](https://vault-dev.lucasduport.cc)
 
 ## Infrastructure Setup
 
@@ -40,16 +40,11 @@ Run these once on the cluster to enable automation:
 ```bash
 # Register needed Helm repositories
 helm repo add traefik https://helm.traefik.io/traefik
-helm repo add external-secrets https://charts.external-secrets.io
 helm repo add external-dns https://kubernetes-sigs.github.io/external-dns/
 helm repo update
 
 # Install Traefik (required for Middleware CRDs — skip if k3s ships it already)
 helm install traefik traefik/traefik -n kube-system
-
-# Install External Secrets Operator
-helm install external-secrets external-secrets/external-secrets \
-  -n external-secrets --create-namespace --set installCRDs=true
 
 # Install ExternalDNS (Cloudflare)
 helm install external-dns external-dns/external-dns \
@@ -100,14 +95,12 @@ kubectl create secret docker-registry gitlab-registry-secret -n suivi-item-dev \
 With **ExternalDNS** installed, you no longer need to manually manage DNS records in the Cloudflare dashboard.
 
 ### How it works:
-1. When you enable a service (e.g., `gatus`), an **Ingress** resource is created with a host like `status.dev.lucasduport.cc`.
+1. When you enable a service (e.g., `gatus`), an **Ingress** resource is created with a host like `status-dev.lucasduport.cc`.
 2. **ExternalDNS** detects this Ingress and automatically creates the corresponding `A` record in Cloudflare pointing to your public IP.
 3. If you disable the service or change the host, ExternalDNS will automatically update or delete the record.
 
-### Proxy Status (Grey Cloud)
-By default, records are created as **DNS Only (Grey Cloud)**.
-- This is necessary for `*.dev.lucasduport.cc` because Cloudflare's free tier only supports SSL for one level of subdomains.
-- **Traefik + cert-manager** handles the SSL certificates locally on your cluster.
+### Proxy Status (Orange Cloud)
+Dev records use the same `*.lucasduport.cc` wildcard as prod — Cloudflare proxy is fully supported.
 
 ## Useful Commands
 

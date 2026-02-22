@@ -1,102 +1,174 @@
 # Infrastructure Deployment Guide
 
-This guide explains how to deploy your infrastructure from scratch, following the "Zero-Knowledge" path to ensure all secrets are managed securely via Vaultwarden and External Secrets Operator (ESO).
-
-## Prerequisites
-- A running **k3s** cluster.
-- **Helm**, **kubectl**, and **Argo CD** CLI installed.
-- Core operators installed as per [k8s/README.md](README.md#2-install-core-operators):
-  - `cert-manager`
-  - `external-dns`
-  - `external-secrets`
-  - `traefik` (required for `Middleware` CRDs — bundled with k3s unless disabled with `--disable=traefik`)
+This guide explains how to deploy your **dev** infrastructure from scratch on a fresh k3s node.
+Secrets are managed via `my-secrets.yaml` — a local file never committed to Git.
 
 ---
 
-## Phase 1: Bootstrapping Vaultwarden
+## Phase 0: Node Setup
 
-Vaultwarden is the source of truth for all other secrets. We must deploy it first using temporary manual secrets.
+### 1. Install k3s
+Run this on your server node. We keep the built-in Traefik (required for `Middleware` CRDs).
 
-### 1. Create the Bootstrap Secret
-Manually create the secret that Vaultwarden needs to start.
 ```bash
-# Set your namespace (infra or infra-dev)
-NAMESPACE="infra-dev"
-DOMAIN="vault.dev.lucasduport.cc"
-
-kubectl create secret generic vaultwarden-secret \
-  -n $NAMESPACE \
-  --from-literal=DOMAIN="https://$DOMAIN" \
-  --from-literal=ADMIN_TOKEN="choose-a-very-long-admin-token" \
-  --from-literal=DATABASE_URL="postgresql://postgres:changeme@postgres.$NAMESPACE.svc.cluster.local:5432/vaultwarden"
+curl -sfL https://get.k3s.io | sh -s - \
+  --write-kubeconfig-mode 644
 ```
 
-### 2. Deploy the "Bootstrap" version of the chart
-Deploy the chart with `externalSecrets.enabled` set to **false**. This tells the chart to use the local `vaultwarden-secret` we just created.
+Copy the kubeconfig to your local machine so `kubectl` and `helm` can talk to the cluster:
 
 ```bash
+# On your LOCAL machine
+mkdir -p ~/.kube
+scp user@<NODE_IP>:/etc/rancher/k3s/k3s.yaml ~/.kube/config
+# Replace 127.0.0.1 with the real node IP
+sed -i '' "s/127.0.0.1/<NODE_IP>/g" ~/.kube/config
+# Verify
+kubectl get nodes
+```
+
+### 2. Install tooling (macOS)
+```bash
+brew install helm kubectl argocd
+```
+
+---
+
+## Phase 0.5: Install Core Operators
+
+These are one-time cluster-wide installs. Run them from your local machine.
+
+```bash
+# Register Helm repos
+helm repo add traefik https://helm.traefik.io/traefik
+helm repo add cert-manager https://charts.jetstack.io
+helm repo add external-dns https://kubernetes-sigs.github.io/external-dns/
+helm repo add argo https://argoproj.github.io/argo-helm
+helm repo update
+```
+
+#### cert-manager
+```bash
+helm install cert-manager cert-manager/cert-manager \
+  -n cert-manager --create-namespace \
+  --set crds.enabled=true
+```
+
+#### ExternalDNS (Cloudflare)
+Replace `YOUR_CF_TOKEN` with your Cloudflare API token (Zone: DNS Edit permission) and `YOUR_PUBLIC_IP` with your box's public IP.
+
+```bash
+# Store the token as a secret (never pass tokens as plain Helm values)
+kubectl create secret generic cloudflare-api-token \
+  -n kube-system \
+  --from-literal=CF_API_TOKEN=YOUR_CF_TOKEN
+
+helm install external-dns external-dns/external-dns \
+  -n kube-system \
+  --set provider=cloudflare \
+  --set "env[0].name=CF_API_TOKEN" \
+  --set "env[0].valueFrom.secretKeyRef.name=cloudflare-api-token" \
+  --set "env[0].valueFrom.secretKeyRef.key=CF_API_TOKEN" \
+  --set policy=sync \
+  --set txtOwnerId=k3s-dev \
+  --set "extraArgs[0]=--default-targets=YOUR_PUBLIC_IP"
+```
+
+#### Argo CD
+```bash
+helm install argocd argo/argo-cd \
+  -n argocd --create-namespace \
+  --set server.service.type=ClusterIP
+
+# Retrieve the initial admin password
+kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath="{.data.password}" | base64 -d && echo
+```
+
+> The ArgoCD UI is not exposed by default. Use `kubectl port-forward svc/argocd-server -n argocd 8080:443` to access it locally.
+
+---
+
+## Phase 1: Fill in your secrets
+
+Copy the example file and fill in all values:
+
+```bash
+cp ./k8s/helm-charts/infra/my-secrets.example.yaml ./k8s/helm-charts/infra/my-secrets.yaml
+# Edit my-secrets.yaml — never commit it (it's in .gitignore)
+```
+
+Key things to set:
+- `postgres.rootPassword` — shared by all DB-connected services
+- `vaultwarden.secrets.ADMIN_TOKEN` — a long random string (or use `openssl rand -hex 32`)
+- `lldap.secrets.*`, `gatus.secrets.*`, `vpn.secrets.*`, etc.
+
+> `DOMAIN` and `DATABASE_URL` for Vaultwarden are auto-computed from `ingressDomain`, `hostSuffix` and `postgres.rootPassword` — you do not need to set them manually.
+> `POSTGRES_PASSWORD` in `stream-share-secrets` is also auto-injected from `postgres.rootPassword`.
+
+---
+
+## Phase 2: Deploy
+
+```bash
+kubectl create namespace infra-dev
+
 helm upgrade --install infra-dev ./k8s/helm-charts/infra \
   -n infra-dev --create-namespace \
   -f ./k8s/helm-charts/infra/values-dev.yaml \
-  --set externalSecrets.enabled=false \
+  -f ./k8s/helm-charts/infra/my-secrets.yaml \
   --set vaultwarden.enabled=true \
-  --set postgres.enabled=true
+  --set postgres.enabled=true \
+  --set traefik.enabled=true
 ```
 
-### 3. Setup your Vaultwarden Account
-1. Go to your vault domain (e.g., `https://vault.dev.lucasduport.cc`).
-2. Create your account.
-3. **Important**: Go to **Account Settings** -> **Security** -> **Keys**.
-4. Click **View API Key** and take note of your `client_id` and `client_secret`. You will need these for the next step.
-
----
-
-## Phase 2: Populating Secrets
-
-### 1. Create the "Bridge Secret"
-Now that you have your API keys, create the secret that allows ESO to talk to Vaultwarden.
+Wait for pods to be ready:
 ```bash
-kubectl create secret generic vaultwarden-api-key \
-  -n $NAMESPACE \
-  --from-literal=client_id=YOUR_CLIENT_ID \
-  --from-literal=client_secret=YOUR_CLIENT_SECRET
+kubectl -n infra-dev get pods -w
 ```
 
-### 2. Add Secrets to Vaultwarden
-Inside the Vaultwarden web UI, create "Login" entries for each service. Use the **Title** as the path (e.g., `gatus/config`) and add the required fields in the **Custom Fields** section (type "Hidden").
-
-| Entry Title (Key) | Field Name (Property) | Description |
-|-------------------|-----------------------|-------------|
-| `gatus/config`    | `discord_webhook_all` | Discord webhook URL |
-| `vpn/config`      | `password`            | WG-Easy login password |
-| `vpn/config`      | `hash`                | Argon2 password hash |
-| `lldap/config`    | `jwt_secret`          | Random string for JWT |
-| `lldap/config`    | `admin_pass`          | Admin password for LLDAP |
+Then browse to `https://vault-dev.lucasduport.cc` to verify Vaultwarden is up.
 
 ---
 
-## Phase 3: Full Automation
+## Phase 3: Enable remaining services
 
-Now that Vaultwarden is populated and the bridge is built, we can enable full automation.
-
-### 1. Switch to External Secrets
-Update your deployment to enable ESO. This will switch the source of secrets from local manifests to Vaultwarden.
+Add services one by one or all at once:
 
 ```bash
 helm upgrade --install infra-dev ./k8s/helm-charts/infra \
   -n infra-dev \
   -f ./k8s/helm-charts/infra/values-dev.yaml \
-  --set externalSecrets.enabled=true
+  -f ./k8s/helm-charts/infra/my-secrets.yaml \
+  --set vaultwarden.enabled=true \
+  --set postgres.enabled=true \
+  --set traefik.enabled=true \
+  --set gatus.enabled=true \
+  --set lldap.enabled=true \
+  --set vpn.enabled=true \
+  --set streamShare.enabled=true \
+  --set suiviItem.enabled=true
 ```
 
-### 2. Enable remaining services
-You can now enable all other services (Gatus, VPN, LLDAP, etc.) in your `values-dev.yaml` or via Helm `--set`. They will automatically wait for ESO to sync their secrets.
+---
 
-### 3. Connect Argo CD
-Once you've verified the manual deployment works, you can point Argo CD to this repository. From then on, any change to `values.yaml` in Git will be automatically applied to the cluster.
+## Phase 4: Connect Argo CD (GitOps hand-off)
+Once you have verified the manual deploy works, hand control to Argo CD so any Git push auto-deploys.
+
+```bash
+# Log in (port-forward first if not exposed)
+argocd login localhost:8080 --username admin --password <INITIAL_PASSWORD> --insecure
+
+# Apply both Prod and Dev app definitions
+kubectl apply -f ./k8s/argocd/applications.yaml
+```
+
+Argo CD will now sync `dev/migration_kubernetes` → `infra-dev` namespace automatically.
 
 ---
 
 ## Maintenance
-- **Adding a new secret**: Simply add it to Vaultwarden. ESO will sync it within 1 hour (default) or immediately if you restart the ESO pods.
-- **Updating tokens**: Update the value in Vaultwarden. The app will receive it after the next sync and pod restart.
+- **New secret needed**: Add it to `my-secrets.yaml`, then re-run the `helm upgrade` command.
+- **Secret rotation**: Update the value in `my-secrets.yaml` and re-run `helm upgrade`. Pods pick up the change on next restart: `kubectl rollout restart deployment/<name> -n infra-dev`.
+- **Check deployed secrets**: `kubectl -n infra-dev get secrets`
+- **ArgoCD sync status**: `argocd app get infra-dev`

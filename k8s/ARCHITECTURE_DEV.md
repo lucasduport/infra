@@ -3,41 +3,37 @@
 This document explains how the production and development environments are managed and exposed via a single public IP.
 
 ## 1. Domain Architecture
-To provide a clean separation between environments while staying within Cloudflare's free-tier limitations:
+Both environments share the same `*.lucasduport.cc` Cloudflare wildcard certificate by using a `-dev` suffix:
 
-- **Production**: Root-level subdomains (`app.lucasduport.cc`).
-- **Development**: Nested subdomains (`app.dev.lucasduport.cc`).
+- **Production**: Root-level subdomains (`vault.lucasduport.cc`, `ldap.lucasduport.cc`, etc.).
+- **Development**: Suffixed subdomains (`vault-dev.lucasduport.cc`, `ldap-dev.lucasduport.cc`, etc.).
+
+This is controlled by the `hostSuffix` value in the Helm chart (`""` for prod, `"-dev"` for dev).
 
 ## 2. Ingress & Routing (Traefik)
 The k3s cluster uses the native **Traefik Ingress Controller**.
-- It listens on ports **80** and **443** (Host Network).
+- It listens on port **80** (HTTP only — TLS is terminated upstream by Caddy).
 - It routes traffic based on the `Host` header defined in [Ingress resources](helm-charts/infra/templates/traefik/ingress.yaml).
 
-## 3. DNS Automation (ExternalDNS)
-We use `external-dns` to synchronize Kubernetes Ingress hosts with Cloudflare DNS records.
-- **Provider**: Cloudflare.
-- **Policy**: `sync` (automatically creates and deletes records).
-- **Proxy Status**: Disabled (Grey Cloud).
+## 3. DNS (Cloudflare)
+DNS records for `*-dev.lucasduport.cc` are covered by the existing `*.lucasduport.cc` wildcard — Cloudflare proxy (orange cloud) is fully supported.
+- Dev DNS entries point to the same public IP as prod (the Caddy server).
+- ExternalDNS can manage them automatically when enabled.
 
-> **Why Grey Cloud?**
-> Cloudflare's free tier does not support SSL for nested wildcards like `*.dev.lucasduport.cc`. By using "Grey Cloud" (DNS only), we let **Traefik + cert-manager** handle the TLS certificates locally via Let's Encrypt, bypassing Cloudflare's proxy limitations.
-
-## 4. SSL/TLS (cert-manager)
-- **Issuer**: Let's Encrypt (Production).
-- **Challenge Type**: HTTP-01 (handled automatically via Traefik).
+## 4. SSL/TLS (Caddy)
+Caddy (running on the prod server) terminates all TLS using Let's Encrypt certificates.
+- It forwards dev traffic to the k3s Traefik via plain HTTP on port 80.
+- No cert-manager or TLS configuration needed on Traefik for dev.
 
 ## 5. Traffic Flow
-`User` -> `Your Public IP` -> `Router (443)` -> `k3s Node (Traefik)` -> `Namespace (Prod/Dev)` -> `Service Pod`
-
-### 2. Production Caddy Configuration (Gateway)
-The Production Caddy (Docker) is configured to match `dev-*` subdomains and forward them to the Kubernetes node on a specific port (**8080**).
-
-**File**: `caddy/mount/Caddyfile`
-```plaintext
-@dev {
-    header_regexp host Host ^dev-.*\.lucasduport\.cc$
-}
-handle @dev {
+```
+User
+  → Cloudflare (HTTPS, *.lucasduport.cc wildcard cert)
+  → Public IP → Router (port forward 443 → 192.168.1.73)
+  → Caddy (TLS termination, Let's Encrypt)
+  → Traefik k3s (HTTP port 80, 192.168.1.201)
+  → Service Pod (infra-dev namespace)
+```
     reverse_proxy 192.168.1.201:8080 {
         header_up Host {host}
         header_up X-Forwarded-Proto {scheme}

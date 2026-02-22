@@ -1,27 +1,103 @@
 {{- if .Values.vpn.enabled }}
+# Headscale — self-hosted Tailscale control plane
+# Dashboard:  https://vpn{{ .Values.hostSuffix }}.{{ .Values.ingressDomain }}/admin
+# Clients connect Tailscale to: https://vpn{{ .Values.hostSuffix }}.{{ .Values.ingressDomain }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: headscale-config
+  namespace: {{ .Values.infraNamespace }}
+data:
+  config.yaml: |
+    server_url: "https://vpn{{ .Values.hostSuffix }}.{{ .Values.ingressDomain }}"
+    listen_addr: 0.0.0.0:8081
+    grpc_listen_addr: 0.0.0.0:50443
+    grpc_allow_insecure: false
+    metrics_listen_addr: 127.0.0.1:9090
+    noise:
+      private_key_path: /var/lib/headscale/noise_private.key
+    prefixes:
+      v4: 100.64.0.0/10
+      v6: fd7a:115c:a1e0::/48
+      allocation: sequential
+    derp:
+      server:
+        enabled: false
+      urls:
+        - https://controlplane.tailscale.com/derpmap/default
+      auto_update_enabled: true
+      update_frequency: 24h
+    database:
+      type: sqlite
+      sqlite:
+        path: /var/lib/headscale/db.sqlite
+    log:
+      level: info
+    dns:
+      override_local_dns: true
+      nameservers:
+        global:
+          - 1.1.1.1
+          - 1.0.0.1
+      magic_dns: true
+      base_domain: ts.{{ .Values.ingressDomain }}
+    tls_letsencrypt_hostname: ""
+    tls_cert_path: ""
+    tls_key_path: ""
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: headplane-config
+  namespace: {{ .Values.infraNamespace }}
+data:
+  config.yaml: |
+    server:
+      host: "0.0.0.0"
+      port: 3000
+      base_url: "https://vpn{{ .Values.hostSuffix }}.{{ .Values.ingressDomain }}"
+      cookie_secret_path: "/run/secrets/headplane/cookie_secret"
+      cookie_secure: true
+      data_path: "/var/lib/headplane"
+    headscale:
+      url: "http://127.0.0.1:8081"
+      config_path: "/etc/headscale/config.yaml"
+      config_strict: false
+---
 apiVersion: v1
 kind: Service
 metadata:
-  name: wg-easy
+  name: headscale
   namespace: {{ .Values.infraNamespace }}
 spec:
   type: ClusterIP
   selector:
-    app: wg-easy
+    app: headscale
   ports:
-    - name: web-ui
-      port: 51821
-      targetPort: 51821
-      protocol: TCP
-    - name: wireguard
-      port: 51820
-      targetPort: 51820
-      protocol: UDP
+    - name: http
+      port: 8081
+      targetPort: 8081
+    - name: ui
+      port: 3000
+      targetPort: 3000
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: wireguard-data
+  name: headscale-data
+  namespace: {{ .Values.infraNamespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: headplane-data
   namespace: {{ .Values.infraNamespace }}
 spec:
   accessModes:
@@ -34,82 +110,108 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: wg-easy
+  name: headscale
   namespace: {{ .Values.infraNamespace }}
   labels:
-    app: wg-easy
+    app: headscale
 spec:
-  replicas: {{ .Values.vpn.replicas }}
+  replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
-      app: wg-easy
+      app: headscale
   template:
     metadata:
       labels:
-        app: wg-easy
+        app: headscale
     spec:
-      hostNetwork: true
       {{- with .Values.vpn.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-        - name: wg-easy
+        - name: headscale
           image: {{ .Values.vpn.image }}
-          securityContext:
-            capabilities:
-              add:
-                - NET_ADMIN
-                - NET_RAW
-                - SYS_MODULE
-          env:
-            - name: WG_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: vpn-secrets
-                  key: WG_HOST
-            - name: PASSWORD_HASH
-              valueFrom:
-                secretKeyRef:
-                  name: vpn-secrets
-                  key: PASSWORD_HASH
-            - name: WG_ENABLE_IPV6
-              valueFrom:
-                secretKeyRef:
-                  name: vpn-secrets
-                  key: WG_ENABLE_IPV6
+          command: ["headscale", "serve"]
+          ports:
+            - containerPort: 8081
+              name: http
+            - containerPort: 50443
+              name: grpc
           volumeMounts:
-            - name: wireguard-data
-              mountPath: /etc/wireguard
-            - name: dev-tun
-              mountPath: /dev/net/tun
+            - name: headscale-data
+              mountPath: /var/lib/headscale
+            - name: headscale-config
+              mountPath: /etc/headscale/config.yaml
+              subPath: config.yaml
           resources:
             requests:
-              cpu: 25m
+              cpu: 50m
               memory: 64Mi
             limits:
               cpu: 200m
               memory: 256Mi
           readinessProbe:
-            tcpSocket:
-              port: 51821
+            httpGet:
+              path: /health
+              port: 8081
             initialDelaySeconds: 10
+            periodSeconds: 10
           livenessProbe:
-            tcpSocket:
-              port: 51821
+            httpGet:
+              path: /health
+              port: 8081
             initialDelaySeconds: 20
+            periodSeconds: 30
+        - name: headplane
+          image: {{ .Values.vpn.uiImage }}
+          ports:
+            - containerPort: 3000
+              name: ui
+          volumeMounts:
+            - name: headplane-config
+              mountPath: /etc/headplane/config.yaml
+              subPath: config.yaml
+            - name: headplane-data
+              mountPath: /var/lib/headplane
+            - name: headplane-secret
+              mountPath: /run/secrets/headplane
+              readOnly: true
+            - name: headscale-config
+              mountPath: /etc/headscale/config.yaml
+              subPath: config.yaml
+              readOnly: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /admin
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
       volumes:
-        - name: wireguard-data
+        - name: headscale-data
           persistentVolumeClaim:
-            claimName: wireguard-data
-        - name: dev-tun
-          hostPath:
-            path: /dev/net/tun
-            type: CharDevice
-      securityContext:
-        sysctls:
-          - name: net.ipv4.ip_forward
-            value: "1"
-          - name: net.ipv6.conf.all.forwarding
-            value: "1"
+            claimName: headscale-data
+        - name: headscale-config
+          configMap:
+            name: headscale-config
+        - name: headplane-config
+          configMap:
+            name: headplane-config
+        - name: headplane-data
+          persistentVolumeClaim:
+            claimName: headplane-data
+        - name: headplane-secret
+          secret:
+            secretName: vpn-secrets
+            items:
+              - key: HEADPLANE_COOKIE_SECRET
+                path: cookie_secret
 {{- end }}

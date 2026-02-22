@@ -15,20 +15,19 @@ commonLabels:
 common:
   ghcrAuth: "" # GitHub token
 
-# Specific service configurations
-externalSecrets:
-  enabled: false # Enable to use ExternalSecret instead of Secret templates
-  secretStoreName: vaultwarden-store # Name of the SecretStore to use
-
 externalDns:
   enabled: true
   proxied: true # Sets "Orange Cloud" status in Cloudflare
+  target: "" # Your public IP for DNS records — set in values-dev.yaml or override at deploy time with --set externalDns.target=X.X.X.X
 
 traefik:
   enabled: true
+  tls: false # Set to false when using Cloudflare Flexible SSL (origin serves plain HTTP)
   nasIP: "192.168.1.135"
   nasPort: 81
   certResolver: "false"
+
+hostSuffix: "" # Suffix appended to service hostnames, e.g. "-dev" → vault-dev.lucasduport.cc
 
 postgres:
   enabled: false
@@ -65,8 +64,8 @@ streamShare:
 
 vpn:
   enabled: false
-  image: ghcr.io/wg-easy/wg-easy:latest
-  replicas: 1
+  image: headscale/headscale:latest
+  uiImage: ghcr.io/tale/headplane:latest
   nodeSelector:
     node-role.kubernetes.io/control-plane: "true"
   secrets: {}

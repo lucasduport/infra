@@ -14,7 +14,7 @@ alerting:
       description: "Endpoint unhealthy{{ if .Values.isDev }} (DEV){{ end }}"
 
 ui:
-  header: "Monitoring Dashboard 👀{{ if .Values.isDev }} [DEV]{{ end }}"
+  header: "Monitoring Dashboard 👀{{ if .Values.isDev }} (Dev){{ end }}"
   title: "Status{{ if .Values.isDev }} (Dev){{ end }}"
   logo: "https://portfolio.lucasduport.cc/images/avatar.png"
   link: "https://portfolio.lucasduport.cc/"

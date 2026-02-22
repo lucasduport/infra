@@ -2,8 +2,10 @@
 infraNamespace: infra-dev
 suiviItemNamespace: suivi-item-dev
 
-ingressDomain: dev.lucasduport.cc
+ingressDomain: lucasduport.cc
+hostSuffix: "-dev" # Produces vault-dev.lucasduport.cc, ldap-dev.lucasduport.cc, etc. (covered by *.lucasduport.cc Cloudflare wildcard)
 isDev: true
 
-traefik:
-  enabled: false # Enable after confirming Traefik CRDs are available: kubectl get crd | grep traefik
+externalDns:
+  proxied: true
+  target: "90.112.183.193" # Your public IP — update this when it changes (or override at deploy time with --set externalDns.target=X.X.X.X)

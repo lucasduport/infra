@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Values.infraNamespace }}
 spec:
   redirectRegex:
-    regex: "^https?://{{ .Values.ingressDomain }}/(.*)"
+    regex: "^https?://{{ .Values.ingressDomain }}/(.*)"  # root domain — no hostSuffix
     replacement: "https://portfolio.lucasduport.cc/${1}"
 ---
 apiVersion: traefik.io/v1alpha1
@@ -16,7 +16,7 @@ metadata:
   namespace: {{ .Values.infraNamespace }}
 spec:
   redirectRegex:
-    regex: "^https?://resume.{{ .Values.ingressDomain }}/(.*)"
+    regex: "^https?://resume{{ .Values.hostSuffix }}.{{ .Values.ingressDomain }}/(.*)"
     replacement: "https://portfolio.lucasduport.cc/cvs/CV_EN_2025.pdf"
 ---
 apiVersion: traefik.io/v1alpha1
@@ -26,7 +26,7 @@ metadata:
   namespace: {{ .Values.infraNamespace }}
 spec:
   redirectRegex:
-    regex: "^https?://cv.{{ .Values.ingressDomain }}/(.*)"
+    regex: "^https?://cv{{ .Values.hostSuffix }}.{{ .Values.ingressDomain }}/(.*)"
     replacement: "https://portfolio.lucasduport.cc/cvs/CV_FR_2025.pdf"
 ---
 apiVersion: traefik.io/v1alpha1
@@ -36,7 +36,7 @@ metadata:
   namespace: {{ .Values.infraNamespace }}
 spec:
   redirectRegex:
-    regex: "^https?://lkdn.{{ .Values.ingressDomain }}/(.*)"
+    regex: "^https?://lkdn{{ .Values.hostSuffix }}.{{ .Values.ingressDomain }}/(.*)"
     replacement: "https://www.linkedin.com/in/lucas-duport/"
 ---
 apiVersion: traefik.io/v1alpha1
@@ -46,6 +46,6 @@ metadata:
   namespace: {{ .Values.infraNamespace }}
 spec:
   redirectRegex:
-    regex: "^https?://www.{{ .Values.ingressDomain }}/(.*)"
+    regex: "^https?://www{{ .Values.hostSuffix }}.{{ .Values.ingressDomain }}/(.*)"
     replacement: "https://{{ .Values.ingressDomain }}/${1}"
 {{- end }}

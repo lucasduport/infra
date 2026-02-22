@@ -1,4 +1,0 @@
-# Namespaces are not managed by this chart.
-# They are created via --create-namespace in the helm install/upgrade command,
-# or pre-created manually with: kubectl create namespace <name>
-# This avoids conflicts between --create-namespace and chart-owned Namespace resources.
