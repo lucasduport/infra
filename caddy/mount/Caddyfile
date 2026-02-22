@@ -44,7 +44,7 @@
 	}
 
 	@dev {
-		header_regexp host Host ^.*\.dev\.lucasduport\.cc$
+		header_regexp host Host ^.*dev\.lucasduport\.cc$
 	}
 	handle @dev {
 		# Forward dev traffic to the Kubernetes Traeffik port
