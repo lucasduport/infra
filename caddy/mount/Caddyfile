@@ -43,16 +43,20 @@
 		redir https://www.linkedin.com/in/lucas-duport/
 	}
 
+	@dev {
+		header_regexp host Host ^.*\.dev\.lucasduport\.cc$
+	}
+	handle @dev {
+		# Forward dev traffic to the Kubernetes Traeffik port
+		reverse_proxy 192.168.1.201:80 {
+			header_up Host {host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
 	@www host www.lucasduport.cc
 	handle @www {
 		redir https://lucasduport.cc{uri}
-	}
-
-	@dev host_regexp ^[^.]+\-dev\.lucasduport\.cc$
-	handle @dev {
-		reverse_proxy 192.168.1.201:80 {
-			header_up Host {host}
-		}
 	}
 
 	# Default handler for this site
